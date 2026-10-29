@@ -46,7 +46,9 @@ erDiagram
 | `stock` | int | Остаток на складе, шт. |
 | `description` | string | Описание |
 | `specs` | map | Характеристики: `{ "Ширина захвата": "2,5 м", … }` |
-| `images` | array\<string\> | Пути к фотографиям в Cloud Storage: `products/<id>/<файл>` |
+| `images` | array\<string\> | Пути к фотографиям в Cloud Storage: `products/<id>/main.jpg` (960×720) |
+| `thumbnail` | string | Уменьшенное фото для каталога: `products/<id>/thumb.jpg` (480×360) |
+| `imageCredit` | map | Автор фото: `author`, `license`, `source` (ссылка на исходный файл) |
 | `createdAt` | timestamp | Дата добавления — для сортировки «сначала новые» |
 
 `manufacturer`, `origin` и `country` повторяют данные поставщика. Это сделано нарочно: Firestore не

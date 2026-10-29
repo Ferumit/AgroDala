@@ -1,6 +1,6 @@
 // Главная страница: иконки категорий и список товаров из Firestore.
 // Фильтры, сортировка и поиск подключаются на 4-й неделе (ТЗ, таблица 6)
-import { db, collection, getDocs, query, where, orderBy, limit } from './firebase.js';
+import { db, collection, getDocs, query, where, orderBy, limit, photoUrl } from './firebase.js';
 import { escapeHtml, formatPrice, icon, stockLabel } from './ui.js';
 
 const params = new URLSearchParams(location.search);
@@ -26,6 +26,27 @@ function renderCategories(categories) {
       .join('');
 }
 
+// Фото товара или, если его нет, иконка категории на цветном фоне.
+// loading="lazy": фото ниже экрана грузятся только при прокрутке
+function photo(p, iconName = 'package') {
+  const placeholder = `<div class="photo-placeholder">${icon(iconName)}</div>`;
+  if (!p.thumbnail) return placeholder;
+  return `<img class="product-card__photo" src="${photoUrl(p.thumbnail)}" alt="${escapeHtml(p.name)}"
+               width="480" height="360" loading="lazy" data-placeholder="${escapeHtml(iconName)}">`;
+}
+
+// Если фото не загрузилось (удалено из хранилища, нет сети) — показываем иконку
+document.addEventListener(
+  'error',
+  (event) => {
+    const img = event.target;
+    if (img instanceof HTMLImageElement && img.dataset.placeholder) {
+      img.outerHTML = `<div class="photo-placeholder">${icon(img.dataset.placeholder)}</div>`;
+    }
+  },
+  true
+);
+
 function renderProducts(products, iconOf) {
   if (products.length === 0) {
     productsList.innerHTML = '<li class="muted">В этой категории пока нет товаров.</li>';
@@ -36,7 +57,7 @@ function renderProducts(products, iconOf) {
       (p) => `
       <li>
         <a class="product-card" href="product.html?id=${encodeURIComponent(p.id)}">
-          <div class="photo-placeholder">${icon(iconOf[p.categoryId] ?? 'package')}</div>
+          ${photo(p, iconOf[p.categoryId])}
           <div class="product-card__body">
             <span class="product-card__name">${escapeHtml(p.name)}</span>
             <span class="product-card__meta">${escapeHtml(p.manufacturer)} · ${escapeHtml(p.country)}</span>

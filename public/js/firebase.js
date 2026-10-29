@@ -22,7 +22,12 @@ if (!isLocal && !productionConfig) {
 
 const app = initializeApp(
   isLocal
-    ? { projectId: 'demo-agrodala', apiKey: 'demo-key', authDomain: 'demo-agrodala.firebaseapp.com' }
+    ? {
+        projectId: 'demo-agrodala',
+        apiKey: 'demo-key',
+        authDomain: 'demo-agrodala.firebaseapp.com',
+        storageBucket: 'demo-agrodala.appspot.com',
+      }
     : productionConfig
 );
 
@@ -32,4 +37,14 @@ export const auth = getAuth(app);
 if (isLocal) {
   connectFirestoreEmulator(db, '127.0.0.1', 8085);
   connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+}
+
+// Адрес фотографии из Cloud Storage по её пути в базе (products/<id>/main.jpg).
+// Правила Storage разрешают всем читать фото товаров, поэтому адрес строится сразу,
+// без отдельного запроса getDownloadURL на каждую карточку
+const storageHost = isLocal ? 'http://127.0.0.1:9199' : 'https://firebasestorage.googleapis.com';
+
+export function photoUrl(path) {
+  const bucket = app.options.storageBucket;
+  return `${storageHost}/v0/b/${bucket}/o/${encodeURIComponent(path)}?alt=media`;
 }

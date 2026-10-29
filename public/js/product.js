@@ -1,10 +1,27 @@
 // Страница товара: product.html?id=<идентификатор товара>
-import { db, doc, getDoc } from './firebase.js';
+import { db, doc, getDoc, photoUrl } from './firebase.js';
 import { escapeHtml, formatPrice, icon, stockLabel } from './ui.js';
 import { ORIGINS, PURPOSES, TYPES } from './dictionaries.js';
 
 const root = document.querySelector('[data-product]');
 const id = new URLSearchParams(location.search).get('id');
+
+// Большое фото с подписью об авторе: снимки взяты с Wikimedia Commons
+// под свободными лицензиями, и большинство из них требуют указывать автора
+function photo(p, iconName = 'package') {
+  if (!p.images?.length) {
+    return `<div class="product__photo photo-placeholder">${icon(iconName)}</div>`;
+  }
+  const credit = p.imageCredit
+    ? `<figcaption>Фото: ${escapeHtml(p.imageCredit.author)},
+         <a href="${escapeHtml(p.imageCredit.source)}" target="_blank" rel="noopener">${escapeHtml(p.imageCredit.license)}</a>,
+         Wikimedia Commons</figcaption>`
+    : '';
+  return `<figure class="product__photo">
+      <img src="${photoUrl(p.images[0])}" alt="${escapeHtml(p.name)}" width="960" height="720">
+      ${credit}
+    </figure>`;
+}
 
 function render(p, category) {
   document.title = `${p.name} — AgroDala`;
@@ -18,7 +35,7 @@ function render(p, category) {
       <a href="index.html?category=${encodeURIComponent(p.categoryId)}">${escapeHtml(category?.name ?? 'Категория')}</a>
     </nav>
     <div class="product">
-      <div class="product__photo photo-placeholder">${icon(category?.icon ?? 'package')}</div>
+      ${photo(p, category?.icon)}
       <div class="panel">
         <h1>${escapeHtml(p.name)}</h1>
         ${stockLabel(p.stock)}

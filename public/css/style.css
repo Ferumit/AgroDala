@@ -632,6 +632,15 @@ textarea {
   color: var(--green-600);
 }
 
+.product-card__photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--green-50);
+}
+
 .photo-placeholder .icon {
   width: 38%;
   height: 38%;
@@ -686,8 +695,24 @@ textarea {
 }
 
 .product__photo {
+  margin: 0;
   overflow: hidden;
   border-radius: var(--radius);
+}
+
+.product__photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--green-50);
+}
+
+.product__photo figcaption {
+  padding: 6px 2px 0;
+  color: var(--muted);
+  font-size: 0.75rem;
 }
 
 .product__price {
