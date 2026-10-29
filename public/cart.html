@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Корзина — AgroDala</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="img/icons/sprout.svg">
+  <script type="module" src="js/layout.js"></script>
+</head>
+<body data-page="cart">
+  <!-- Вёрстка страницы. Работа с корзиной в Firestore и оформление заказа — 5-я неделя -->
+  <main>
+    <h1>Корзина</h1>
+    <div class="two-columns">
+      <section class="panel">
+        <div class="empty-state">
+          <span class="icon" style="-webkit-mask-image: url(img/icons/shopping-cart.svg); mask-image: url(img/icons/shopping-cart.svg)" aria-hidden="true"></span>
+          <p>В корзине пока нет товаров.</p>
+          <a class="btn" href="index.html">Перейти в каталог</a>
+        </div>
+      </section>
+      <aside class="panel">
+        <h2>Оформление заказа</h2>
+        <form>
+          <div class="field"><label for="name">Имя</label><input id="name" name="name" autocomplete="name" required></div>
+          <div class="field"><label for="phone">Телефон</label><input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="+7 700 000 00 00" required></div>
+          <fieldset class="field">
+            <legend>Способ получения</legend>
+            <div class="chips">
+              <label class="chip"><input type="radio" name="delivery" value="pickup" checked><span>Самовывоз со склада</span></label>
+              <label class="chip"><input type="radio" name="delivery" value="delivery"><span>Доставка</span></label>
+            </div>
+          </fieldset>
+          <div class="field"><label for="address">Адрес доставки</label><input id="address" name="address" autocomplete="street-address"></div>
+          <div class="field"><label for="comment">Комментарий</label><textarea id="comment" name="comment" rows="3"></textarea></div>
+          <p><strong>Итого: 0 ₸</strong></p>
+          <p class="muted">Оплата при получении или по счёту. Сумму пересчитывает сервер по актуальным ценам.</p>
+          <button class="btn" type="submit" disabled>Оформить заказ</button>
+        </form>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

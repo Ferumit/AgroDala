@@ -1,0 +1,20 @@
+rules_version = '2';
+
+// Фотографии товаров: смотреть может любой посетитель, загружать —
+// только контент-менеджер и администратор (роль берётся из Firestore)
+service firebase.storage {
+  match /b/{bucket}/o {
+    function hasRole(roles) {
+      return request.auth != null
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role in roles;
+    }
+
+    match /products/{productId}/{fileName} {
+      allow read: if true;
+      allow create, update: if hasRole(['content', 'admin'])
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if hasRole(['content', 'admin']);
+    }
+  }
+}

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Администрирование — AgroDala</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="img/icons/sprout.svg">
+  <script type="module" src="js/layout.js"></script>
+</head>
+<body data-page="admin">
+  <!-- Вёрстка страницы. Управление каталогом, заказами и импорт CSV — 5-я неделя -->
+  <main>
+    <h1>Администрирование</h1>
+    <div class="admin">
+      <nav class="tabs" aria-label="Разделы">
+        <a href="#products" aria-current="page">Товары</a>
+        <a href="#categories">Категории</a>
+        <a href="#orders">Заказы</a>
+        <a href="#import">Импорт из Excel (CSV)</a>
+      </nav>
+      <section class="panel">
+        <div class="catalog-head">
+          <h2>Товары</h2>
+          <button class="btn" type="button" disabled>Добавить товар</button>
+        </div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Название</th><th>Категория</th><th>Производитель</th><th>Цена</th><th>Остаток</th></tr></thead>
+            <tbody><tr><td colspan="5" class="muted">Список товаров появится после входа сотрудника</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

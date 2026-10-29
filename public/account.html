@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Личный кабинет — AgroDala</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="img/icons/sprout.svg">
+  <script type="module" src="js/layout.js"></script>
+</head>
+<body data-page="account">
+  <!-- Вёрстка страницы. Данные профиля и заказов из Firestore — 5-я неделя -->
+  <main>
+    <h1>Личный кабинет</h1>
+    <div class="two-columns">
+      <section class="panel">
+        <h2>Мои заказы</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Номер</th><th>Дата</th><th>Сумма</th><th>Статус</th></tr></thead>
+            <tbody><tr><td colspan="4" class="muted">Заказов пока нет</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+      <aside class="panel">
+        <h2>Профиль</h2>
+        <form>
+          <div class="field"><label for="name">Имя</label><input id="name" name="name" autocomplete="name"></div>
+          <div class="field"><label for="phone">Телефон</label><input id="phone" name="phone" type="tel" autocomplete="tel"></div>
+          <div class="field"><label for="email">Электронная почта</label><input id="email" name="email" type="email" disabled></div>
+          <div class="field"><label for="address">Адрес доставки</label><input id="address" name="address" autocomplete="street-address"></div>
+          <button class="btn" type="submit" disabled>Сохранить</button>
+          <button class="btn btn--ghost" type="button" disabled>Выйти</button>
+        </form>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

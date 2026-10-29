@@ -1,0 +1,10 @@
+[
+  { "id": "soil",       "name": "Почвообработка",              "icon": "tractor",      "purpose": "field",   "order": 1, "description": "Плуги, бороны, культиваторы и дискаторы для полей" },
+  { "id": "graders",    "name": "Грейдеры и навесное",         "icon": "construction", "purpose": "field",   "order": 2, "description": "Грейдеры, планировщики и навесное оборудование для тракторов" },
+  { "id": "sowing",     "name": "Посевная техника",            "icon": "sprout",       "purpose": "field",   "order": 3, "description": "Сеялки и картофелесажалки" },
+  { "id": "motoblocks", "name": "Мотоблоки и культиваторы",    "icon": "cog",          "purpose": "garden",  "order": 4, "description": "Мотоблоки, мотокультиваторы и навесное оборудование к ним" },
+  { "id": "hand",       "name": "Ручной садовый инструмент",   "icon": "shovel",       "purpose": "garden",  "order": 5, "description": "Лопаты, грабли, тяпки, секаторы и вилы" },
+  { "id": "watering",   "name": "Полив и опрыскивание",        "icon": "droplets",     "purpose": "general", "order": 6, "description": "Насосы, шланги, системы капельного полива и опрыскиватели" },
+  { "id": "power",      "name": "Бензо- и электроинструмент",  "icon": "zap",          "purpose": "general", "order": 7, "description": "Триммеры, бензопилы, кусторезы и генераторы" },
+  { "id": "harvest",    "name": "Уборка и хранение урожая",    "icon": "wheat",        "purpose": "general", "order": 8, "description": "Зернодробилки, тележки, весы и ящики для урожая" }
+]

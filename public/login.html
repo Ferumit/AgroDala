@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Вход — AgroDala</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="img/icons/sprout.svg">
+  <script type="module" src="js/layout.js"></script>
+</head>
+<body data-page="login">
+  <!-- Вёрстка страницы. Вход и регистрация через Firebase Authentication — 5-я неделя -->
+  <main>
+    <section class="panel auth">
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" aria-selected="true">Вход</button>
+        <button type="button" role="tab" aria-selected="false">Регистрация</button>
+      </div>
+      <form>
+        <div class="field"><label for="email">Электронная почта</label><input id="email" name="email" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="password">Пароль</label><input id="password" name="password" type="password" autocomplete="current-password" minlength="6" required></div>
+        <button class="btn" type="submit" style="width: 100%" disabled>Войти</button>
+      </form>
+      <p><a href="#">Забыли пароль?</a></p>
+    </section>
+  </main>
+</body>
+</html>

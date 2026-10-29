@@ -1,0 +1,117 @@
+rules_version = '2';
+
+// Правила безопасности Cloud Firestore (ТЗ, п. 2.3 «Безопасность»):
+// - каталог читают все, а меняют только сотрудники с нужной ролью;
+// - покупатель читает и меняет только свои профиль и корзину и читает только свои заказы;
+// - заказы создаёт и меняет только Cloud Functions (Admin SDK не проверяет эти правила),
+//   поэтому подменить цену или статус из браузера нельзя.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // Роль хранится в профиле users/{uid}. Нет профиля — нет роли
+    function hasRole(roles) {
+      let profile = /databases/$(database)/documents/users/$(request.auth.uid);
+      return signedIn() && exists(profile) && get(profile).data.role in roles;
+    }
+
+    function isNonEmptyString(value, maxLength) {
+      return value is string && value.size() > 0 && value.size() <= maxLength;
+    }
+
+    function validCategory(c) {
+      return c.keys().hasAll(['name', 'icon', 'purpose', 'order'])
+        && isNonEmptyString(c.name, 80)
+        && isNonEmptyString(c.icon, 40)
+        && c.purpose in ['field', 'garden', 'general']
+        && c.order is int;
+    }
+
+    function validProduct(p) {
+      return p.keys().hasAll(['name', 'categoryId', 'purpose', 'type', 'manufacturer',
+                              'origin', 'price', 'priceRange', 'stock'])
+        && isNonEmptyString(p.name, 200)
+        && isNonEmptyString(p.categoryId, 40)
+        && p.purpose in ['field', 'garden', 'general']
+        && p.type in ['heavy', 'mini']
+        && isNonEmptyString(p.manufacturer, 80)
+        && p.origin in ['china', 'europe']
+        && p.price is int && p.price > 0
+        && p.priceRange in ['upTo20k', '20kTo100k', '100kTo500k', 'over500k']
+        && p.stock is int && p.stock >= 0;
+    }
+
+    function validUser(u) {
+      return u.keys().hasOnly(['name', 'phone', 'email', 'addresses', 'role', 'createdAt'])
+        && isNonEmptyString(u.name, 100)
+        && (!('phone' in u) || u.phone is string && u.phone.size() <= 20)
+        && (!('addresses' in u) || u.addresses is list && u.addresses.size() <= 5);
+    }
+
+    // Корзина: { items: { <productId>: <количество> }, updatedAt }.
+    // Цены в корзине не храним: сумму считает сервер по ценам из каталога
+    function validCart(c) {
+      return c.keys().hasOnly(['items', 'updatedAt'])
+        && c.items is map
+        && c.items.size() <= 50;
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow create, update: if hasRole(['content', 'admin']) && validCategory(request.resource.data);
+      allow delete: if hasRole(['content', 'admin']);
+    }
+
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update: if hasRole(['content', 'admin']) && validProduct(request.resource.data);
+      allow delete: if hasRole(['content', 'admin']);
+    }
+
+    // Поставщики — внутренние данные компании, покупателям не видны
+    match /suppliers/{supplierId} {
+      allow read: if hasRole(['manager', 'content', 'admin']);
+      allow write: if hasRole(['content', 'admin']);
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid) || hasRole(['manager', 'admin']);
+      // При регистрации можно создать только профиль покупателя
+      allow create: if isOwner(uid)
+        && validUser(request.resource.data)
+        && request.resource.data.role == 'customer'
+        && request.resource.data.email == request.auth.token.email;
+      // Свою роль, почту и дату регистрации покупатель поменять не может
+      allow update: if isOwner(uid)
+        && validUser(request.resource.data)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['role', 'email', 'createdAt']);
+      // Роли назначает администратор
+      allow update: if hasRole(['admin']) && validUser(request.resource.data);
+      allow delete: if false;
+    }
+
+    match /carts/{uid} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid) && validCart(request.resource.data);
+    }
+
+    match /orders/{orderId} {
+      allow read: if (signedIn() && resource.data.userId == request.auth.uid)
+        || hasRole(['manager', 'admin']);
+      allow write: if false;
+    }
+
+    // Счётчики (номер следующего заказа и т. п.) — только для Cloud Functions
+    match /counters/{counterId} {
+      allow read, write: if false;
+    }
+  }
+}

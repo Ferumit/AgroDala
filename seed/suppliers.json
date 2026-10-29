@@ -1,0 +1,8 @@
+[
+  { "id": "greenfield", "name": "Taizhou Greenfield Machinery Co., Ltd.", "brand": "Greenfield", "country": "Китай",    "origin": "china",  "contacts": { "email": "sales@greenfield.example",  "phone": "+86 576 0000-0001", "website": "greenfield.example" } },
+  { "id": "harvestpro", "name": "Shandong HarvestPro Tools Co., Ltd.",    "brand": "HarvestPro", "country": "Китай",   "origin": "china",  "contacts": { "email": "export@harvestpro.example", "phone": "+86 531 0000-0002", "website": "harvestpro.example" } },
+  { "id": "gardenpro",  "name": "Ningbo GardenPro Ltd.",                  "brand": "GardenPro", "country": "Китай",    "origin": "china",  "contacts": { "email": "info@gardenpro.example",    "phone": "+86 574 0000-0003", "website": "gardenpro.example" } },
+  { "id": "feldwerk",   "name": "Feldwerk GmbH",                          "brand": "Feldwerk",  "country": "Германия", "origin": "europe", "contacts": { "email": "export@feldwerk.example",   "phone": "+49 30 0000-0004",  "website": "feldwerk.example" } },
+  { "id": "agripol",    "name": "Agripol Sp. z o.o.",                     "brand": "Agripol",   "country": "Польша",   "origin": "europe", "contacts": { "email": "biuro@agripol.example",     "phone": "+48 22 0000-0005",  "website": "agripol.example" } },
+  { "id": "terrano",    "name": "Terrano S.r.l.",                         "brand": "Terrano",   "country": "Италия",   "origin": "europe", "contacts": { "email": "sales@terrano.example",     "phone": "+39 02 0000-0006",  "website": "terrano.example" } }
+]

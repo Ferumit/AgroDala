@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Каталог — AgroDala</title>
+  <meta name="description" content="Сельскохозяйственный инструмент и малая техника из Китая и Европы">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="img/icons/sprout.svg">
+  <script type="module" src="js/layout.js"></script>
+  <script type="module" src="js/home.js"></script>
+</head>
+<body data-page="home">
+  <main>
+    <h2 class="visually-hidden">Категории</h2>
+    <ul class="categories" data-categories></ul>
+
+    <!-- Раскрывающийся блок сортировки и фильтрации (ТЗ, таблица 2).
+         Разметка готова; запросы к базе по фильтрам — 4-я неделя -->
+    <details class="filters">
+      <summary>
+        <span class="icon" style="-webkit-mask-image: url(img/icons/sliders-horizontal.svg); mask-image: url(img/icons/sliders-horizontal.svg)" aria-hidden="true"></span>
+        <span>Фильтры и сортировка <span class="muted">(в разработке)</span></span>
+        <span class="icon" style="-webkit-mask-image: url(img/icons/chevron-down.svg); mask-image: url(img/icons/chevron-down.svg)" aria-hidden="true"></span>
+      </summary>
+      <form class="filters__body" data-filters>
+        <fieldset class="field">
+          <legend>Назначение</legend>
+          <div class="chips">
+            <label class="chip"><input type="checkbox" name="purpose" value="field"><span>Для полей</span></label>
+            <label class="chip"><input type="checkbox" name="purpose" value="garden"><span>Для дачи и сада</span></label>
+            <label class="chip"><input type="checkbox" name="purpose" value="general"><span>Общие сельхозработы</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="field">
+          <legend>Тип</legend>
+          <div class="chips">
+            <label class="chip"><input type="checkbox" name="type" value="heavy"><span>Крупное оборудование</span></label>
+            <label class="chip"><input type="checkbox" name="type" value="mini"><span>Мини-инструмент</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="field">
+          <legend>Страна происхождения</legend>
+          <div class="chips">
+            <label class="chip"><input type="checkbox" name="origin" value="china"><span>Китай</span></label>
+            <label class="chip"><input type="checkbox" name="origin" value="europe"><span>Европа</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="field">
+          <legend>Цена</legend>
+          <div class="chips">
+            <label class="chip"><input type="radio" name="priceRange" value="upTo20k"><span>до 20 000 ₸</span></label>
+            <label class="chip"><input type="radio" name="priceRange" value="20kTo100k"><span>20 000 – 100 000 ₸</span></label>
+            <label class="chip"><input type="radio" name="priceRange" value="100kTo500k"><span>100 000 – 500 000 ₸</span></label>
+            <label class="chip"><input type="radio" name="priceRange" value="over500k"><span>свыше 500 000 ₸</span></label>
+          </div>
+          <div class="price-inputs">
+            <input type="number" name="priceFrom" min="0" step="1000" placeholder="от, ₸" aria-label="Цена от">
+            <input type="number" name="priceTo" min="0" step="1000" placeholder="до, ₸" aria-label="Цена до">
+          </div>
+        </fieldset>
+        <div class="field">
+          <label for="manufacturer">Производитель</label>
+          <select id="manufacturer" name="manufacturer">
+            <option value="">Все производители</option>
+          </select>
+          <label class="chip" style="margin-top: 8px">
+            <input type="checkbox" name="inStock" value="1"><span>Только в наличии</span>
+          </label>
+        </div>
+        <div class="field">
+          <label for="sort">Сортировка</label>
+          <select id="sort" name="sort">
+            <option value="new">Сначала новые</option>
+            <option value="priceAsc">Сначала дешёвые</option>
+            <option value="priceDesc">Сначала дорогие</option>
+            <option value="name">По названию</option>
+          </select>
+          <div class="filters__actions" style="margin-top: 12px">
+            <button class="btn" type="submit" disabled>Применить</button>
+            <button class="btn btn--ghost" type="reset">Сбросить</button>
+          </div>
+        </div>
+      </form>
+    </details>
+
+    <div class="catalog-head">
+      <h1 data-catalog-title>Каталог</h1>
+      <span class="muted" data-catalog-count></span>
+    </div>
+    <ul class="products" data-products>
+      <li class="muted">Загрузка…</li>
+    </ul>
+  </main>
+</body>
+</html>
