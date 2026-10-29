@@ -99,5 +99,3 @@ docs/mockups.md         макеты: скриншоты страниц на к�
 - Иконки — [Lucide](https://lucide.dev), лицензия ISC (`public/img/icons/LICENSE`).
 - Фото товаров — Wikimedia Commons под свободными лицензиями, авторы перечислены в
   [docs/image-credits.md](docs/image-credits.md).
-- Код проекта написан с помощью ИИ-ассистента Claude Code (Anthropic) по ТЗ и под руководством
-  автора; автор проверяет и принимает каждое изменение.
