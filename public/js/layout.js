@@ -1,8 +1,10 @@
 // Общие шапка и подвал: одна разметка на все страницы сайта
+import { auth, db, doc, getDoc, onAuthStateChanged } from './firebase.js';
+import { STAFF_ROLES } from './auth.js';
 import { icon } from './ui.js';
 
 const page = document.body.dataset.page;
-const current = (name) => (name === page ? 'aria-current="page"' : '');
+const current = (...names) => (names.includes(page) ? 'aria-current="page"' : '');
 
 document.body.insertAdjacentHTML(
   'afterbegin',
@@ -17,7 +19,8 @@ document.body.insertAdjacentHTML(
       <nav class="site-nav" aria-label="Основное меню">
         <a href="index.html" ${current('home')}>${icon('store')}<span class="site-nav__label">Каталог</span></a>
         <a href="cart.html" ${current('cart')}>${icon('shopping-cart')}<span class="site-nav__label">Корзина</span><span class="badge" data-cart-count hidden></span></a>
-        <a href="login.html" ${current('login')} data-account-link>${icon('user')}<span class="site-nav__label">Войти</span></a>
+        <a href="admin.html" ${current('admin')} data-admin-link hidden>${icon('package')}<span class="site-nav__label">Админка</span></a>
+        <a href="login.html" ${current('login', 'account')} data-account-link>${icon('user')}<span class="site-nav__label">Войти</span></a>
       </nav>
     </div>
   </header>`
@@ -42,3 +45,23 @@ document.body.insertAdjacentHTML(
     </div>
   </footer>`
 );
+
+// Ссылка «Войти» превращается в ссылку на кабинет с именем пользователя,
+// а сотрудникам дополнительно показывается вход в административную панель
+const accountLink = document.querySelector('[data-account-link]');
+const adminLink = document.querySelector('[data-admin-link]');
+
+onAuthStateChanged(auth, async (user) => {
+  const label = accountLink.querySelector('.site-nav__label');
+  accountLink.href = user ? 'account.html' : 'login.html';
+  label.textContent = user ? (user.displayName || 'Кабинет').split(' ')[0] : 'Войти';
+  adminLink.hidden = true;
+  if (!user) return;
+  try {
+    const profile = (await getDoc(doc(db, 'users', user.uid))).data();
+    if (profile) label.textContent = profile.name.split(' ')[0];
+    adminLink.hidden = !STAFF_ROLES.includes(profile?.role);
+  } catch (err) {
+    console.error(err);
+  }
+});

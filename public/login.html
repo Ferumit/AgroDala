@@ -7,21 +7,71 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="img/icons/sprout.svg">
   <script type="module" src="js/layout.js"></script>
+  <script type="module" src="js/login.js"></script>
 </head>
 <body data-page="login">
-  <!-- Вёрстка страницы. Вход и регистрация через Firebase Authentication — 5-я неделя -->
   <main>
     <section class="panel auth">
       <div class="tabs" role="tablist">
-        <button type="button" role="tab" aria-selected="true">Вход</button>
-        <button type="button" role="tab" aria-selected="false">Регистрация</button>
+        <button type="button" role="tab" id="tab-login" aria-controls="form-login" aria-selected="true" data-tab="login">Вход</button>
+        <button type="button" role="tab" id="tab-register" aria-controls="form-register" aria-selected="false" data-tab="register">Регистрация</button>
       </div>
-      <form>
-        <div class="field"><label for="email">Электронная почта</label><input id="email" name="email" type="email" autocomplete="email" required></div>
-        <div class="field"><label for="password">Пароль</label><input id="password" name="password" type="password" autocomplete="current-password" minlength="6" required></div>
-        <button class="btn" type="submit" style="width: 100%" disabled>Войти</button>
+
+      <p class="form-message" data-message role="alert" hidden></p>
+
+      <form id="form-login" role="tabpanel" aria-labelledby="tab-login" data-form="login">
+        <div class="field">
+          <label for="login-email">Электронная почта</label>
+          <input id="login-email" name="email" type="email" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="login-password">Пароль</label>
+          <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn btn--wide" type="submit">Войти</button>
+        <p><button class="link-button" type="button" data-tab="reset">Забыли пароль?</button></p>
       </form>
-      <p><a href="#">Забыли пароль?</a></p>
+
+      <form id="form-register" role="tabpanel" aria-labelledby="tab-register" data-form="register" hidden>
+        <div class="field">
+          <label for="register-name">Имя</label>
+          <input id="register-name" name="name" autocomplete="name" maxlength="100" required>
+        </div>
+        <div class="field">
+          <label for="register-phone">Телефон <span class="muted">(необязательно)</span></label>
+          <input id="register-phone" name="phone" type="tel" autocomplete="tel" maxlength="20"
+                 placeholder="+7 700 000 00 00" pattern="[\d\s\(\)\+\-]{10,20}">
+        </div>
+        <div class="field">
+          <label for="register-email">Электронная почта</label>
+          <input id="register-email" name="email" type="email" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="register-password">Пароль <span class="muted">(не меньше 6 символов)</span></label>
+          <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="6" required>
+        </div>
+        <div class="field">
+          <label for="register-password2">Пароль ещё раз</label>
+          <input id="register-password2" name="password2" type="password" autocomplete="new-password" minlength="6" required>
+        </div>
+        <label class="checkbox">
+          <input type="checkbox" name="consent" required>
+          <span>Согласен на обработку персональных данных в соответствии с Законом РК
+            «О персональных данных и их защите»</span>
+        </label>
+        <button class="btn btn--wide" type="submit">Зарегистрироваться</button>
+      </form>
+
+      <form id="form-reset" data-form="reset" hidden>
+        <h2>Восстановление пароля</h2>
+        <p class="muted">Укажите почту, с которой регистрировались: пришлём ссылку для смены пароля.</p>
+        <div class="field">
+          <label for="reset-email">Электронная почта</label>
+          <input id="reset-email" name="email" type="email" autocomplete="email" required>
+        </div>
+        <button class="btn btn--wide" type="submit">Отправить ссылку</button>
+        <p><button class="link-button" type="button" data-tab="login">Вернуться ко входу</button></p>
+      </form>
     </section>
   </main>
 </body>
