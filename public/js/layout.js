@@ -1,6 +1,6 @@
-// Общие шапка и подвал: одна разметка на все страницы сайта
-import { auth, db, doc, getDoc, onAuthStateChanged } from './firebase.js';
-import { STAFF_ROLES } from './auth.js';
+// Общие шапка и подвал: одна разметка на все страницы сайта.
+// Библиотека Firebase большая, поэтому загружается отдельно, уже после показа шапки:
+// на медленном интернете навигация видна сразу, а не через несколько секунд
 import { icon } from './ui.js';
 
 const page = document.body.dataset.page;
@@ -51,6 +51,11 @@ document.body.insertAdjacentHTML(
 const accountLink = document.querySelector('[data-account-link]');
 const adminLink = document.querySelector('[data-admin-link]');
 const cartBadge = document.querySelector('[data-cart-count]');
+
+const [{ auth, db, doc, getDoc, onAuthStateChanged }, { STAFF_ROLES }] = await Promise.all([
+  import('./firebase.js'),
+  import('./auth.js'),
+]);
 
 onAuthStateChanged(auth, async (user) => {
   const label = accountLink.querySelector('.site-nav__label');

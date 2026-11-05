@@ -11,7 +11,7 @@
     "test": "firebase emulators:exec --only firestore,storage \"vitest run\"",
     "test:ui": "firebase emulators:exec --only auth,firestore,storage,hosting \"node scripts/seed.js && playwright test --project=phone --project=desktop\"",
     "test:browsers": "firebase emulators:exec --only auth,firestore,storage,hosting \"node scripts/seed.js && playwright test --project=firefox --project=webkit\"",
-    "screenshots": "firebase emulators:exec --only auth,firestore,storage,hosting \"node scripts/seed.js && node scripts/screenshots.js\""
+    "screenshots": "firebase emulators:exec --ui --only auth,firestore,storage,hosting \"node scripts/seed.js && node scripts/screenshots.js\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "6.0.0",

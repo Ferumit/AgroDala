@@ -85,3 +85,9 @@
 `diskator-2-5` и его поля справа. Структура описана в [database.md](database.md).
 
 ![Cloud Firestore](screenshots/13-baza-dannyh.png)
+
+Демонстрационный заказ и учётные записи для проверки ролей.
+
+![Заказ в Cloud Firestore](screenshots/22-baza-zakazy.png)
+
+![Authentication](screenshots/23-polzovateli.png)

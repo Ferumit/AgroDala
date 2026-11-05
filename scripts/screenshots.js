@@ -34,6 +34,27 @@ async function shots(options, list) {
 
 const openFilters = (page) => page.locator('.filters summary').click();
 
+// Панель эмуляторов: данные в базе и учётные записи
+const UI = 'http://127.0.0.1:4000/';
+async function uiShots() {
+  const context = await browser.newContext({ viewport: { width: 1366, height: 900 }, locale: 'ru-RU' });
+  const page = await context.newPage();
+  await page.goto(`${UI}firestore/default/data/products/diskator-2-5`);
+  await page.getByText('Feldwerk').first().waitFor();
+  await page.screenshot({ path: `${OUT}13-baza-dannyh.png` });
+  console.log('13-baza-dannyh');
+  await page.goto(`${UI}firestore/default/data/orders`);
+  await page.locator('[data-testid^="firestore-document"], a[href*="/data/orders/"]').first().click();
+  await page.getByText('statusHistory').first().waitFor();
+  await page.screenshot({ path: `${OUT}22-baza-zakazy.png` });
+  console.log('22-baza-zakazy');
+  await page.goto(`${UI}auth`);
+  await page.getByText('Асан Покупатель').first().waitFor();
+  await page.screenshot({ path: `${OUT}23-polzovateli.png` });
+  console.log('23-polzovateli');
+  await context.close();
+}
+
 await shots(PC, [
   { name: '01-glavnaya-pk', url: 'index.html', marker: '.product-card' },
   { name: '02-filtry-pk', url: 'index.html', marker: '#sort', act: openFilters, fullPage: false },
@@ -65,5 +86,7 @@ await shots(phone(360, 640), [
 await shots({ viewport: { width: 768, height: 1024 } }, [
   { name: '21-glavnaya-planshet', url: 'index.html', marker: '.product-card', fullPage: false },
 ]);
+
+await uiShots();
 
 await browser.close();

@@ -48,6 +48,15 @@ for (const kind of ['phone', 'desktop']) {
       await expect(page.locator('.product-card').first()).toBeVisible();
     });
 
+    test('шапка видна до загрузки библиотеки Firebase', async ({ page }) => {
+      // Библиотека Firebase не приходит совсем: страница должна показать шапку и без неё
+      await page.route('**/firebasejs/**', () => {});
+      await page.goto('index.html', { waitUntil: 'commit' });
+      const nav = page.getByRole('navigation', { name: 'Основное меню' });
+      await expect(nav.getByRole('link', { name: 'Корзина' })).toBeVisible();
+      await expect(page.locator('.site-footer')).toBeVisible();
+    });
+
     test('несуществующий товар: понятное сообщение', async ({ page }) => {
       await page.goto('product.html?id=no-such-product');
       await expect(page.getByRole('heading', { name: 'Товар не найден' })).toBeVisible();
