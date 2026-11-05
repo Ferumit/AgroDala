@@ -26,41 +26,109 @@ service cloud.firestore {
       return value is string && value.size() > 0 && value.size() <= maxLength;
     }
 
+    // Необязательное текстовое поле: либо его нет, либо это строка не длиннее maxLength
+    function optionalString(data, field, maxLength) {
+      return !(field in data) || (data[field] is string && data[field].size() <= maxLength);
+    }
+
+    function docExists(collectionName, id) {
+      return exists(/databases/$(database)/documents/$(collectionName)/$(id));
+    }
+
     function validCategory(c) {
       return c.keys().hasAll(['name', 'icon', 'purpose', 'order'])
+        && c.keys().hasOnly(['name', 'icon', 'purpose', 'order', 'description'])
         && isNonEmptyString(c.name, 80)
         && isNonEmptyString(c.icon, 40)
         && c.purpose in ['field', 'garden', 'general']
-        && c.order is int;
+        && c.order is int
+        && optionalString(c, 'description', 300);
+    }
+
+    // Те же границы, что у priceRangeOf в public/js/dictionaries.js: диапазон всегда
+    // соответствует цене, иначе товар оказался бы не в том фильтре
+    function priceRangeOf(price) {
+      return price < 20000 ? 'upTo20k'
+        : price < 100000 ? '20kTo100k'
+        : price < 500000 ? '100kTo500k'
+        : 'over500k';
     }
 
     function validProduct(p) {
       return p.keys().hasAll(['name', 'categoryId', 'purpose', 'type', 'manufacturer',
-                              'origin', 'price', 'priceRange', 'stock'])
+                              'origin', 'price', 'priceRange', 'stock', 'createdAt'])
+        && p.keys().hasOnly(['name', 'categoryId', 'supplierId', 'purpose', 'type', 'manufacturer',
+                             'origin', 'country', 'price', 'priceRange', 'stock', 'description',
+                             'specs', 'images', 'thumbnail', 'imageCredit', 'createdAt'])
         && isNonEmptyString(p.name, 200)
         && isNonEmptyString(p.categoryId, 40)
+        // Firestore не проверяет связи сам: товар без существующей категории не попадёт в каталог
+        && docExists('categories', p.categoryId)
+        && (!('supplierId' in p) || (isNonEmptyString(p.supplierId, 40) && docExists('suppliers', p.supplierId)))
         && p.purpose in ['field', 'garden', 'general']
         && p.type in ['heavy', 'mini']
         && isNonEmptyString(p.manufacturer, 80)
         && p.origin in ['china', 'europe']
-        && p.price is int && p.price > 0
-        && p.priceRange in ['upTo20k', '20kTo100k', '100kTo500k', 'over500k']
-        && p.stock is int && p.stock >= 0;
+        && p.price is int && p.price > 0 && p.price <= 1000000000
+        && p.priceRange == priceRangeOf(p.price)
+        && p.stock is int && p.stock >= 0
+        && p.createdAt is timestamp
+        && optionalString(p, 'country', 60)
+        && optionalString(p, 'description', 5000)
+        && optionalString(p, 'thumbnail', 300)
+        && (!('specs' in p) || p.specs is map)
+        && (!('images' in p) || (p.images is list && p.images.size() <= 10))
+        && (!('imageCredit' in p) || p.imageCredit is map);
+    }
+
+    function validSupplier(s) {
+      return s.keys().hasAll(['name', 'brand', 'country', 'origin'])
+        && s.keys().hasOnly(['name', 'brand', 'country', 'origin', 'contacts'])
+        && isNonEmptyString(s.name, 120)
+        && isNonEmptyString(s.brand, 80)
+        && isNonEmptyString(s.country, 60)
+        && s.origin in ['china', 'europe']
+        && (!('contacts' in s) || s.contacts is map);
+    }
+
+    function validAddress(a) {
+      return a is map
+        && a.keys().hasOnly(['label', 'city', 'street'])
+        && optionalString(a, 'label', 40)
+        && optionalString(a, 'city', 60)
+        && optionalString(a, 'street', 120);
+    }
+
+    // В правилах нет циклов, поэтому каждый из пяти возможных адресов проверяется отдельно
+    function validAddresses(items) {
+      return items is list && items.size() <= 5
+        && (items.size() < 1 || validAddress(items[0]))
+        && (items.size() < 2 || validAddress(items[1]))
+        && (items.size() < 3 || validAddress(items[2]))
+        && (items.size() < 4 || validAddress(items[3]))
+        && (items.size() < 5 || validAddress(items[4]));
     }
 
     function validUser(u) {
-      return u.keys().hasOnly(['name', 'phone', 'email', 'addresses', 'role', 'createdAt'])
+      return u.keys().hasAll(['name', 'email', 'role'])
+        && u.keys().hasOnly(['name', 'phone', 'email', 'addresses', 'role', 'createdAt'])
         && isNonEmptyString(u.name, 100)
-        && (!('phone' in u) || u.phone is string && u.phone.size() <= 20)
-        && (!('addresses' in u) || u.addresses is list && u.addresses.size() <= 5);
+        && u.email is string
+        && u.role in ['customer', 'manager', 'content', 'admin']
+        // Телефон необязателен; пустая строка — профиль сохранён без телефона
+        && (!('phone' in u) || (u.phone is string && u.phone.matches('[0-9 ()+-]{0,20}')))
+        && (!('addresses' in u) || validAddresses(u.addresses))
+        && (!('createdAt' in u) || u.createdAt is timestamp);
     }
 
     // Корзина: { items: { <productId>: <количество> }, updatedAt }.
-    // Цены в корзине не храним: сумму считает сервер по ценам из каталога
+    // Цен в корзине нет: сумму считает сервер по ценам из каталога
     function validCart(c) {
-      return c.keys().hasOnly(['items', 'updatedAt'])
+      return c.keys().hasAll(['items'])
+        && c.keys().hasOnly(['items', 'updatedAt'])
         && c.items is map
-        && c.items.size() <= 50;
+        && c.items.size() <= 50
+        && (!('updatedAt' in c) || c.updatedAt == request.time);
     }
 
     match /categories/{categoryId} {
@@ -71,14 +139,22 @@ service cloud.firestore {
 
     match /products/{productId} {
       allow read: if true;
-      allow create, update: if hasRole(['content', 'admin']) && validProduct(request.resource.data);
+      // Дату добавления ставит сервер, и она не меняется: по ней работает сортировка
+      // «сначала новые», а товар без даты вообще не попал бы в такой запрос
+      allow create: if hasRole(['content', 'admin'])
+        && validProduct(request.resource.data)
+        && request.resource.data.createdAt == request.time;
+      allow update: if hasRole(['content', 'admin'])
+        && validProduct(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt;
       allow delete: if hasRole(['content', 'admin']);
     }
 
     // Поставщики — внутренние данные компании, покупателям не видны
     match /suppliers/{supplierId} {
       allow read: if hasRole(['manager', 'content', 'admin']);
-      allow write: if hasRole(['content', 'admin']);
+      allow create, update: if hasRole(['content', 'admin']) && validSupplier(request.resource.data);
+      allow delete: if hasRole(['content', 'admin']);
     }
 
     match /users/{uid} {
@@ -87,14 +163,17 @@ service cloud.firestore {
       allow create: if isOwner(uid)
         && validUser(request.resource.data)
         && request.resource.data.role == 'customer'
-        && request.resource.data.email == request.auth.token.email;
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.createdAt == request.time;
       // Свою роль, почту и дату регистрации покупатель поменять не может
       allow update: if isOwner(uid)
         && validUser(request.resource.data)
         && !request.resource.data.diff(resource.data).affectedKeys()
               .hasAny(['role', 'email', 'createdAt']);
-      // Роли назначает администратор
-      allow update: if hasRole(['admin']) && validUser(request.resource.data);
+      // Роли назначает администратор; почту и дату регистрации не меняет и он
+      allow update: if hasRole(['admin'])
+        && validUser(request.resource.data)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['email', 'createdAt']);
       allow delete: if false;
     }
 

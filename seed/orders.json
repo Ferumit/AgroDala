@@ -1,0 +1,10 @@
+[
+  { "number": "AD-000001", "user": "farmer", "daysAgo": 34, "status": "completed", "delivery": { "method": "delivery", "address": "Акмолинская обл., с. Шортанды, ул. Целинная, 3" }, "items": [{ "productId": "plug-3-35", "qty": 1 }, { "productId": "borona-zubovaya-3", "qty": 2 }], "comment": "Позвонить за день до доставки" },
+  { "number": "AD-000002", "user": "buyer", "daysAgo": 27, "status": "completed", "delivery": { "method": "pickup" }, "items": [{ "productId": "lopata-shtykovaya", "qty": 2 }, { "productId": "grabli-vitye-14", "qty": 1 }] },
+  { "number": "AD-000003", "user": "buyer", "daysAgo": 19, "status": "cancelled", "delivery": { "method": "delivery", "address": "Астана, ул. Пушкина, 1" }, "items": [{ "productId": "benzopila-45", "qty": 1 }], "comment": "Передумал, отмена по телефону" },
+  { "number": "AD-000004", "user": "farmer", "daysAgo": 12, "status": "shipped", "delivery": { "method": "delivery", "address": "Акмолинская обл., с. Шортанды, ул. Целинная, 3" }, "items": [{ "productId": "motopompa-50", "qty": 1 }, { "productId": "shlang-armirovannyy-25", "qty": 4 }] },
+  { "number": "AD-000005", "user": "buyer", "daysAgo": 7, "status": "readyForPickup", "delivery": { "method": "pickup" }, "items": [{ "productId": "trimmer-benzin-1-9", "qty": 1 }] },
+  { "number": "AD-000006", "user": "buyer", "daysAgo": 4, "status": "picking", "delivery": { "method": "delivery", "address": "Астана, ул. Пушкина, 1" }, "items": [{ "productId": "telezhka-sadovaya-100", "qty": 1 }, { "productId": "sekator-ploskostnoy", "qty": 2 }] },
+  { "number": "AD-000007", "user": "buyer", "daysAgo": 2, "status": "confirmed", "delivery": { "method": "pickup" }, "items": [{ "productId": "motoblok-benzin-7", "qty": 1 }], "comment": "Заберу в субботу" },
+  { "number": "AD-000008", "user": "farmer", "daysAgo": 0, "status": "new", "delivery": { "method": "delivery", "address": "Акмолинская обл., с. Шортанды, ул. Целинная, 3" }, "items": [{ "productId": "opryskivatel-pritsepnoy-600", "qty": 1 }] }
+]
