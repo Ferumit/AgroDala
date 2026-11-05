@@ -21,6 +21,11 @@ export function icon(name, label = '') {
   return `<span class="icon" style="-webkit-mask-image: ${url}; mask-image: ${url}" ${a11y}></span>`;
 }
 
+// Метка статуса заказа; цвет зависит от стадии (см. .status в style.css)
+export function statusLabel(status, labels) {
+  return `<span class="status status--${escapeHtml(status)}">${escapeHtml(labels[status] ?? status)}</span>`;
+}
+
 export function stockLabel(stock) {
   return stock > 0
     ? `<span class="stock">В наличии: ${stock} шт.</span>`

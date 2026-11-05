@@ -13,7 +13,7 @@ import {
 } from './firebase.js';
 import { currentUser, ensureProfile, STAFF_ROLES } from './auth.js';
 import { ORDER_STATUSES, ROLES } from './dictionaries.js';
-import { escapeHtml, formatPrice } from './ui.js';
+import { escapeHtml, formatPrice, statusLabel } from './ui.js';
 
 const form = document.querySelector('[data-profile]');
 const message = document.querySelector('[data-message]');
@@ -53,10 +53,10 @@ async function loadOrders(uid) {
     .map((d) => {
       const o = d.data();
       return `<tr>
-        <td>${escapeHtml(o.number)}</td>
-        <td>${o.createdAt?.toDate().toLocaleDateString('ru-RU') ?? ''}</td>
-        <td>${formatPrice(o.total)}</td>
-        <td>${ORDER_STATUSES[o.status] ?? escapeHtml(o.status)}</td>
+        <td data-label="Номер">${escapeHtml(o.number)}</td>
+        <td data-label="Дата">${o.createdAt?.toDate().toLocaleDateString('ru-RU') ?? ''}</td>
+        <td data-label="Сумма">${formatPrice(o.total)}</td>
+        <td data-label="Статус">${statusLabel(o.status, ORDER_STATUSES)}</td>
       </tr>`;
     })
     .join('');

@@ -64,6 +64,10 @@ img {
   max-width: 100%;
 }
 
+/* Точки перелома раскладки: 600 px — таблицы становятся таблицами (на телефоне это
+   карточки), 760 px — шапка в одну строку и подписи в меню, 900 px — две колонки на
+   страницах корзины и кабинета, 1000 px — иконки категорий в один ряд */
+
 /* Иконка: SVG из img/icons служит маской, поэтому её цвет задаётся через color.
    Сам файл указывается в разметке (style="mask-image: url(...)"): относительный адрес
    из CSS-переменной браузер считал бы от папки css/, а не от страницы */
@@ -118,6 +122,7 @@ img {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: 44px;
   color: #fff;
   font-weight: 700;
   font-size: 1.3rem;
@@ -133,6 +138,7 @@ img {
 .search {
   grid-area: search;
   display: flex;
+  min-width: 0; /* иначе поле поиска не сжимается и шапка вылезает за экран */
 }
 
 .search input {
@@ -151,6 +157,7 @@ img {
   background: var(--wheat);
   color: var(--green-900);
   cursor: pointer;
+  min-width: 44px;
 }
 
 .site-nav {
@@ -164,7 +171,10 @@ img {
   position: relative;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  min-width: 44px; /* удобный размер для пальца */
+  min-height: 44px;
   padding: 8px;
   border-radius: 8px;
   color: #fff;
@@ -176,8 +186,15 @@ img {
   background: rgb(255 255 255 / 0.14);
 }
 
+/* На телефоне в меню только иконки. Подпись скрыта визуально, а не через display: none:
+   иначе у ссылки не останется имени для экранного диктора */
 .site-nav__label {
-  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .badge {
@@ -199,11 +216,15 @@ img {
 
 @media (min-width: 760px) {
   .site-header__inner {
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas: 'logo search nav';
   }
   .site-nav__label {
-    display: inline;
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
   }
   .site-nav .badge {
     position: static;
@@ -403,7 +424,7 @@ textarea {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  width: 112px;
+  width: 124px;
   height: 100%;
   padding: 14px 8px;
   border: 2px solid transparent;
@@ -414,6 +435,9 @@ textarea {
   font-size: 0.85rem;
   text-align: center;
   text-decoration: none;
+  /* «электроинструмент» длиннее колонки на экранах около 1000 пикселей */
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 .category__icon {
@@ -444,7 +468,7 @@ textarea {
 @media (min-width: 1000px) {
   .categories {
     display: grid;
-    grid-template-columns: repeat(9, 1fr);
+    grid-template-columns: repeat(9, minmax(0, 1fr));
     margin: 0 0 16px;
     padding: 4px 0;
     overflow: visible;
@@ -520,7 +544,7 @@ textarea {
 
 .chip span {
   display: inline-block;
-  padding: 6px 12px;
+  padding: 9px 12px;
   border: 1px solid var(--line);
   border-radius: 16px;
   font-size: 0.9rem;
@@ -623,7 +647,7 @@ textarea {
   box-shadow: 0 2px 4px rgb(0 0 0 / 0.08), 0 8px 24px rgb(0 0 0 / 0.08);
 }
 
-/* Пока у товаров нет фотографий, вместо фото — иконка категории */
+/* Если у товара нет фотографии, вместо неё — иконка категории */
 .photo-placeholder {
   display: grid;
   place-items: center;
@@ -658,6 +682,9 @@ textarea {
 .product-card__name {
   font-weight: 600;
   font-size: 0.95rem;
+  /* «Картофелесажалка» не помещается в узкую карточку на телефоне целиком */
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 .product-card__meta {
@@ -852,9 +879,172 @@ textarea {
   font-weight: 600;
 }
 
+/* Таблица на узком экране: каждая строка — карточка, подпись колонки берётся из data-label */
+@media (max-width: 599.98px) {
+  .table--cards thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .table--cards tr {
+    display: block;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .table--cards td {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 3px 0;
+    border: 0;
+    text-align: right;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .table--cards td::before {
+    content: attr(data-label);
+    flex: none;
+    max-width: 45%;
+    color: var(--muted);
+    text-align: left;
+  }
+  .table--cards td[colspan]::before {
+    content: none;
+  }
+}
+
+/* Статус заказа: новый и в работе — жёлтый, у покупателя — зелёный, отмена — красный */
+.status {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: var(--wheat-100);
+  color: #5c4100;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.status--shipped,
+.status--readyForPickup,
+.status--completed {
+  background: var(--green-100);
+  color: var(--green-900);
+}
+
+.status--cancelled {
+  background: #fdecea;
+  color: var(--danger);
+}
+
+/* ---------- Корзина ---------- */
+
+.cart-items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cart-item {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  grid-template-areas:
+    'photo info'
+    'qty   sum';
+  gap: 8px 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.cart-item:last-child {
+  border-bottom: 0;
+}
+
+.cart-item__photo {
+  grid-area: photo;
+  display: block;
+  width: 72px;
+  height: 54px;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.cart-item__photo img,
+.cart-item__photo .photo-placeholder {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cart-item__info {
+  grid-area: info;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.cart-item__name {
+  display: block;
+  font-weight: 600;
+}
+
+.cart-item__qty {
+  grid-area: qty;
+  width: 72px;
+  padding: 9px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.cart-item__sum {
+  grid-area: sum;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 700;
+}
+
+@media (min-width: 600px) {
+  .cart-item {
+    grid-template-columns: 72px 1fr auto auto;
+    grid-template-areas: 'photo info qty sum';
+    gap: 16px;
+  }
+  .cart-item__sum {
+    min-width: 170px;
+  }
+}
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.icon-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ---------- Административная панель ---------- */
+
 .admin {
   display: grid;
   gap: 16px;
+}
+
+.admin section {
+  scroll-margin-top: 130px; /* переход по вкладке не должен прятать раздел под шапкой */
 }
 
 @media (min-width: 900px) {

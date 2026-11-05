@@ -7,18 +7,24 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="img/icons/sprout.svg">
   <script type="module" src="js/layout.js"></script>
+  <script type="module" src="js/cart.js"></script>
 </head>
 <body data-page="cart">
-  <!-- Вёрстка страницы. Работа с корзиной в Firestore и оформление заказа — 5-я неделя -->
+  <!-- Сейчас страница показывает корзину из базы. Изменение количества, удаление
+       и оформление заказа через Cloud Functions — 5-я неделя -->
   <main>
     <h1>Корзина</h1>
     <div class="two-columns">
       <section class="panel">
-        <div class="empty-state">
+        <div class="empty-state" data-cart-empty>
           <span class="icon" style="-webkit-mask-image: url(img/icons/shopping-cart.svg); mask-image: url(img/icons/shopping-cart.svg)" aria-hidden="true"></span>
           <p>В корзине пока нет товаров.</p>
-          <a class="btn" href="index.html">Перейти в каталог</a>
+          <div class="form-actions">
+            <a class="btn" href="index.html">Перейти в каталог</a>
+            <a class="btn btn--ghost" href="login.html?next=cart.html" data-cart-login hidden>Войти</a>
+          </div>
         </div>
+        <ul class="cart-items" data-cart-items hidden></ul>
       </section>
       <aside class="panel">
         <h2>Оформление заказа</h2>
@@ -34,8 +40,9 @@
           </fieldset>
           <div class="field"><label for="address">Адрес доставки</label><input id="address" name="address" autocomplete="street-address"></div>
           <div class="field"><label for="comment">Комментарий</label><textarea id="comment" name="comment" rows="3"></textarea></div>
-          <p><strong>Итого: 0 ₸</strong></p>
+          <p><strong>Итого: <span data-cart-total>0 ₸</span></strong></p>
           <p class="muted">Оплата при получении или по счёту. Сумму пересчитывает сервер по актуальным ценам.</p>
+          <p class="muted">Оформление заказа подключается на 5-й неделе разработки.</p>
           <button class="btn" type="submit" disabled>Оформить заказ</button>
         </form>
       </aside>

@@ -6,11 +6,16 @@
   "type": "module",
   "scripts": {
     "dev": "firebase emulators:start",
+    "dev:phone": "firebase emulators:start --config firebase.phone.json",
     "seed": "node scripts/seed.js",
-    "test": "firebase emulators:exec --only firestore,storage \"vitest run\""
+    "test": "firebase emulators:exec --only firestore,storage \"vitest run\"",
+    "test:ui": "firebase emulators:exec --only auth,firestore,storage,hosting \"node scripts/seed.js && playwright test --project=phone --project=desktop\"",
+    "test:browsers": "firebase emulators:exec --only auth,firestore,storage,hosting \"node scripts/seed.js && playwright test --project=firefox --project=webkit\"",
+    "screenshots": "firebase emulators:exec --only auth,firestore,storage,hosting \"node scripts/seed.js && node scripts/screenshots.js\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "6.0.0",
+    "@playwright/test": "1.64.1",
     "firebase": "13.0.0",
     "firebase-admin": "14.5.0",
     "firebase-tools": "15.33.0",

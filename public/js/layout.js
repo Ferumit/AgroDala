@@ -50,17 +50,23 @@ document.body.insertAdjacentHTML(
 // а сотрудникам дополнительно показывается вход в административную панель
 const accountLink = document.querySelector('[data-account-link]');
 const adminLink = document.querySelector('[data-admin-link]');
+const cartBadge = document.querySelector('[data-cart-count]');
 
 onAuthStateChanged(auth, async (user) => {
   const label = accountLink.querySelector('.site-nav__label');
   accountLink.href = user ? 'account.html' : 'login.html';
   label.textContent = user ? (user.displayName || 'Кабинет').split(' ')[0] : 'Войти';
   adminLink.hidden = true;
+  cartBadge.hidden = true;
   if (!user) return;
   try {
     const profile = (await getDoc(doc(db, 'users', user.uid))).data();
     if (profile) label.textContent = profile.name.split(' ')[0];
     adminLink.hidden = !STAFF_ROLES.includes(profile?.role);
+    const cart = (await getDoc(doc(db, 'carts', user.uid))).data();
+    const count = Object.values(cart?.items ?? {}).reduce((sum, qty) => sum + qty, 0);
+    cartBadge.textContent = count;
+    cartBadge.hidden = count === 0;
   } catch (err) {
     console.error(err);
   }
