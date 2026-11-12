@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { SITE } from './scripts/emulators.js';
 
 // Браузерные тесты. Запуск: npm run test:ui (эмуляторы и данные поднимаются автоматически)
 export default defineConfig({
@@ -9,7 +10,7 @@ export default defineConfig({
   workers: 2,
   reporter: [['list']],
   use: {
-    baseURL: process.env.E2E_BASE_URL || 'http://127.0.0.1:5000',
+    baseURL: process.env.E2E_BASE_URL || SITE,
     locale: 'ru-RU',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',

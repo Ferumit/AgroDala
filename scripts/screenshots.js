@@ -1,9 +1,10 @@
 // Скриншоты страниц для docs/mockups.md и отчётов. Запуск: npm run screenshots
 import { chromium, devices } from '@playwright/test';
 import { login } from '../tests/ui/helpers.js';
+import { PANEL, SITE } from './emulators.js';
 
 const OUT = new URL('../docs/screenshots/', import.meta.url).pathname;
-const BASE = 'http://127.0.0.1:5000/';
+const BASE = SITE;
 const PC = { viewport: { width: 1366, height: 900 } };
 const phone = (width, height) => ({ ...devices['Pixel 7'], viewport: { width, height } });
 
@@ -49,7 +50,7 @@ async function fromResults(page) {
 }
 
 // Панель эмуляторов: данные в базе и учётные записи
-const UI = 'http://127.0.0.1:4000/';
+const UI = PANEL;
 async function uiShots() {
   const context = await browser.newContext({ viewport: { width: 1366, height: 900 }, locale: 'ru-RU' });
   const page = await context.newPage();

@@ -5,6 +5,8 @@
   "description": "AgroDala — интернет-магазин сельскохозяйственного инструмента (учебный проект)",
   "type": "module",
   "scripts": {
+    "start": "firebase emulators:exec --ui --only auth,firestore,storage,hosting \"node scripts/start.js\"",
+    "start:phone": "firebase emulators:exec --ui --config firebase.phone.json --only auth,firestore,storage,hosting \"node scripts/start.js\"",
     "dev": "firebase emulators:start",
     "dev:phone": "firebase emulators:start --config firebase.phone.json",
     "seed": "node scripts/seed.js",

@@ -27,6 +27,8 @@ const isPrivateNetwork =
   /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.)/.test(location.hostname);
 const isLocal = isLoopback || isPrivateNetwork;
 const emulatorHost = isLoopback ? '127.0.0.1' : location.hostname;
+// Порты эмуляторов — как в firebase.json (совпадение проверяет tests/pages.test.js)
+const PORTS = { firestore: 28573, auth: 28574, storage: 28575 };
 
 // Настоящий проект Firebase подключается на этапе публикации (неделя 6 по ТЗ)
 const productionConfig = null;
@@ -56,14 +58,14 @@ export const auth = initializeAuth(app, {
 });
 
 if (isLocal) {
-  connectFirestoreEmulator(db, emulatorHost, 8085);
-  connectAuthEmulator(auth, `http://${emulatorHost}:9099`, { disableWarnings: true });
+  connectFirestoreEmulator(db, emulatorHost, PORTS.firestore);
+  connectAuthEmulator(auth, `http://${emulatorHost}:${PORTS.auth}`, { disableWarnings: true });
 }
 
 // Адрес фотографии из Cloud Storage по её пути в базе (products/<id>/main.jpg).
 // Правила Storage разрешают всем читать фото товаров, поэтому адрес строится сразу,
 // без отдельного запроса getDownloadURL на каждую карточку
-const storageHost = isLocal ? `http://${emulatorHost}:9199` : 'https://firebasestorage.googleapis.com';
+const storageHost = isLocal ? `http://${emulatorHost}:${PORTS.storage}` : 'https://firebasestorage.googleapis.com';
 
 export function photoUrl(path) {
   const bucket = app.options.storageBucket;

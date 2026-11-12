@@ -1,5 +1,6 @@
-// Страницы сайта: заранее загружаемые модули Firebase совпадают с тем, что импортирует js/firebase.js.
-// Иначе после смены версии SDK браузер качал бы две версии библиотеки
+// Страницы сайта: заранее загружаемые модули Firebase совпадают с тем, что импортирует js/firebase.js
+// (иначе после смены версии SDK браузер качал бы две версии библиотеки), а порты эмуляторов
+// в js/firebase.js — с firebase.json (иначе сайт не нашёл бы базу)
 import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
@@ -18,5 +19,20 @@ describe('предзагрузка библиотеки Firebase', () => {
     const html = readFileSync(`public/${page}`, 'utf8');
     const preloaded = [...html.matchAll(/<link rel="modulepreload" href="(https:[^"]+)">/g)].map((m) => m[1]).sort();
     expect(preloaded).toEqual(imported);
+  });
+});
+
+describe('порты эмуляторов', () => {
+  it('в js/firebase.js и firebase.phone.json те же, что в firebase.json', () => {
+    const ports = (file) => JSON.parse(readFileSync(file, 'utf8')).emulators;
+    const main = ports('firebase.json');
+    const inBrowser = JSON.parse(
+      firebaseJs.match(/const PORTS = (\{[^}]+\})/)[1].replace(/(\w+):/g, '"$1":')
+    );
+    expect(inBrowser).toEqual({ firestore: main.firestore.port, auth: main.auth.port, storage: main.storage.port });
+    const phone = ports('firebase.phone.json');
+    for (const name of Object.keys(main).filter((n) => main[n].port)) {
+      expect(phone[name].port, name).toBe(main[name].port);
+    }
   });
 });

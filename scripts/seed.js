@@ -7,10 +7,11 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 import { ACCOUNTS, PASSWORD, buildCatalogMeta, buildOrder, buildProduct, loadSeed } from './seed-data.js';
+import { PORTS } from './emulators.js';
 
-process.env.FIRESTORE_EMULATOR_HOST = '127.0.0.1:8085';
-process.env.FIREBASE_AUTH_EMULATOR_HOST = '127.0.0.1:9099';
-process.env.FIREBASE_STORAGE_EMULATOR_HOST = '127.0.0.1:9199';
+process.env.FIRESTORE_EMULATOR_HOST = `127.0.0.1:${PORTS.firestore}`;
+process.env.FIREBASE_AUTH_EMULATOR_HOST = `127.0.0.1:${PORTS.auth}`;
+process.env.FIREBASE_STORAGE_EMULATOR_HOST = `127.0.0.1:${PORTS.storage}`;
 // Без этого Admin SDK ищет проект и ключи на сервере метаданных Google Cloud и ждёт тайм-аута
 process.env.GCLOUD_PROJECT = 'demo-agrodala';
 process.env.METADATA_SERVER_DETECTION = 'none';
