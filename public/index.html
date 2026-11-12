@@ -7,6 +7,13 @@
   <meta name="description" content="Сельскохозяйственный инструмент и малая техника из Китая и Европы">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="img/icons/sprout.svg">
+  <!-- Библиотека Firebase начинает загружаться сразу, а не после цепочки модулей
+       страница → js/firebase.js → gstatic.com (версия — как в js/firebase.js) -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js">
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore-lite.js">
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js">
+  <link rel="modulepreload" href="js/firebase.js">
   <script type="module" src="js/layout.js"></script>
   <script type="module" src="js/home.js"></script>
 </head>
@@ -15,12 +22,13 @@
     <h2 class="visually-hidden">Категории</h2>
     <ul class="categories" data-categories></ul>
 
-    <!-- Раскрывающийся блок сортировки и фильтрации (ТЗ, таблица 2).
-         Разметка готова; запросы к базе по фильтрам — 4-я неделя -->
+    <!-- Раскрывающийся блок сортировки и фильтрации (ТЗ, таблица 2). Выбранные фильтры
+         хранятся в адресе страницы; запросы к базе строит js/catalog.js -->
     <details class="filters">
       <summary>
         <span class="icon" style="-webkit-mask-image: url(img/icons/sliders-horizontal.svg); mask-image: url(img/icons/sliders-horizontal.svg)" aria-hidden="true"></span>
-        <span>Фильтры и сортировка <span class="muted">(в разработке)</span></span>
+        <span>Фильтры и сортировка</span>
+        <span class="badge" data-filters-count hidden></span>
         <span class="icon" style="-webkit-mask-image: url(img/icons/chevron-down.svg); mask-image: url(img/icons/chevron-down.svg)" aria-hidden="true"></span>
       </summary>
       <form class="filters__body" data-filters>
@@ -49,14 +57,15 @@
         <fieldset class="field">
           <legend>Цена</legend>
           <div class="chips">
-            <label class="chip"><input type="radio" name="priceRange" value="upTo20k"><span>до 20 000 ₸</span></label>
-            <label class="chip"><input type="radio" name="priceRange" value="20kTo100k"><span>20 000 – 100 000 ₸</span></label>
-            <label class="chip"><input type="radio" name="priceRange" value="100kTo500k"><span>100 000 – 500 000 ₸</span></label>
-            <label class="chip"><input type="radio" name="priceRange" value="over500k"><span>свыше 500 000 ₸</span></label>
+            <label class="chip"><input type="radio" name="price" value="" checked><span>Любая</span></label>
+            <label class="chip"><input type="radio" name="price" value="upTo20k"><span>до 20 000 ₸</span></label>
+            <label class="chip"><input type="radio" name="price" value="20kTo100k"><span>20 000 – 100 000 ₸</span></label>
+            <label class="chip"><input type="radio" name="price" value="100kTo500k"><span>100 000 – 500 000 ₸</span></label>
+            <label class="chip"><input type="radio" name="price" value="over500k"><span>свыше 500 000 ₸</span></label>
           </div>
           <div class="price-inputs">
-            <input type="number" name="priceFrom" min="0" step="1000" placeholder="от, ₸" aria-label="Цена от">
-            <input type="number" name="priceTo" min="0" step="1000" placeholder="до, ₸" aria-label="Цена до">
+            <input type="number" name="priceFrom" min="0" step="1" inputmode="numeric" placeholder="от, ₸" aria-label="Цена от, тенге">
+            <input type="number" name="priceTo" min="0" step="1" inputmode="numeric" placeholder="до, ₸" aria-label="Цена до, тенге">
           </div>
         </fieldset>
         <div class="field">
@@ -65,7 +74,7 @@
             <option value="">Все производители</option>
           </select>
           <label class="chip" style="margin-top: 8px">
-            <input type="checkbox" name="inStock" value="1"><span>Только в наличии</span>
+            <input type="checkbox" name="stock" value="1"><span>Только в наличии</span>
           </label>
         </div>
         <div class="field">
@@ -77,7 +86,7 @@
             <option value="name">По названию</option>
           </select>
           <div class="filters__actions" style="margin-top: 12px">
-            <button class="btn" type="submit" disabled>Применить</button>
+            <button class="btn" type="submit" data-apply>Показать</button>
             <button class="btn btn--ghost" type="reset">Сбросить</button>
           </div>
         </div>
@@ -86,11 +95,14 @@
 
     <div class="catalog-head">
       <h1 data-catalog-title>Каталог</h1>
-      <span class="muted" data-catalog-count></span>
+      <span class="muted" data-catalog-count aria-live="polite"></span>
     </div>
     <ul class="products" data-products>
       <li class="muted">Загрузка…</li>
     </ul>
+    <div class="more">
+      <button class="btn btn--ghost" type="button" data-more hidden>Показать ещё</button>
+    </div>
   </main>
 </body>
 </html>

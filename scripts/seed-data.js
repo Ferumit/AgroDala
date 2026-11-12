@@ -1,7 +1,7 @@
 // Тестовые данные: чтение файлов seed/ и сборка документов базы.
 // Без обращений к Firebase, поэтому модуль используют и scripts/seed.js, и тесты
 import { readFile } from 'node:fs/promises';
-import { priceRangeOf } from '../public/js/dictionaries.js';
+import { derivedFields } from '../public/js/catalog.js';
 
 export const PASSWORD = 'agrodala123'; // только для эмулятора
 
@@ -38,7 +38,8 @@ export async function loadSeed() {
 }
 
 // Документ товара: поля поставщика копируются в товар, чтобы фильтр по стране и
-// производителю выполнялся одним запросом; диапазон цены вычисляется из цены
+// производителю выполнялся одним запросом; поля для фильтров, сортировки и поиска
+// (диапазон цены, наличие, название для сортировки, слова для поиска) вычисляются
 export function buildProduct({ id, ...product }, { categories, suppliers, credits }, photos = {}) {
   const supplier = suppliers.find((s) => s.id === product.supplierId);
   const category = categories.find((c) => c.id === product.categoryId);
@@ -49,12 +50,18 @@ export function buildProduct({ id, ...product }, { categories, suppliers, credit
     manufacturer: supplier.brand,
     origin: supplier.origin,
     country: supplier.country,
-    priceRange: priceRangeOf(product.price),
+    ...derivedFields({ ...product, manufacturer: supplier.brand }),
     ...photos,
     ...(credit && {
       imageCredit: { author: credit.author, license: credit.license, source: credit.source },
     }),
   };
+}
+
+// Сводка для блока фильтров: список производителей. Firestore не умеет выбирать
+// различающиеся значения поля (DISTINCT), поэтому список хранится отдельным документом meta/catalog
+export function buildCatalogMeta(products) {
+  return { manufacturers: [...new Set(products.map((p) => p.manufacturer))].sort((a, b) => a.localeCompare(b)) };
 }
 
 // Какие статусы заказ прошёл, чтобы оказаться в нынешнем (ТЗ, п. 1.5)

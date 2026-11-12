@@ -6,7 +6,7 @@ import { initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
-import { ACCOUNTS, PASSWORD, buildOrder, buildProduct, loadSeed } from './seed-data.js';
+import { ACCOUNTS, PASSWORD, buildCatalogMeta, buildOrder, buildProduct, loadSeed } from './seed-data.js';
 
 process.env.FIRESTORE_EMULATOR_HOST = '127.0.0.1:8085';
 process.env.FIREBASE_AUTH_EMULATOR_HOST = '127.0.0.1:9099';
@@ -47,7 +47,7 @@ async function main() {
   const seed = await loadSeed();
   const { categories, suppliers, products, orders, carts } = seed;
 
-  for (const name of ['categories', 'suppliers', 'products', 'users', 'carts', 'orders', 'counters']) {
+  for (const name of ['categories', 'suppliers', 'products', 'meta', 'users', 'carts', 'orders', 'counters']) {
     await clearCollection(name);
   }
 
@@ -63,12 +63,14 @@ async function main() {
 
   // Даты добавления разносим по дням, чтобы работала сортировка «по новизне»
   const now = Date.now();
-  products.forEach((product, i) => {
-    batch.set(db.collection('products').doc(product.id), {
-      ...buildProduct(product, seed, photos[i]),
+  const docs = products.map((product, i) => buildProduct(product, seed, photos[i]));
+  docs.forEach((product, i) => {
+    batch.set(db.collection('products').doc(products[i].id), {
+      ...product,
       createdAt: Timestamp.fromMillis(now - i * 24 * 60 * 60 * 1000),
     });
   });
+  batch.set(db.collection('meta').doc('catalog'), { ...buildCatalogMeta(docs), updatedAt: Timestamp.now() });
   await batch.commit();
 
   // Пользователи: сначала Authentication (вход), потом профиль с ролью в Firestore

@@ -2,6 +2,8 @@
    медиазапросы ниже добавляют раскладку для планшетов и компьютеров */
 
 :root {
+  /* Анимация высоты до auto для блока фильтров */
+  interpolate-size: allow-keywords;
   --green-900: #163d1c;
   --green-700: #23662e;
   --green-600: #2e7d3a;
@@ -407,6 +409,9 @@ textarea {
 .categories {
   display: flex;
   gap: 10px;
+  /* Место под иконки занято до их загрузки из базы: иначе блок фильтров и каталог
+     съезжали бы вниз, и нажатие в этот момент попадало бы не туда */
+  min-height: 165px;
   margin: 0 -16px 16px;
   padding: 4px 16px;
   overflow-x: auto;
@@ -478,6 +483,13 @@ textarea {
   }
 }
 
+/* Узкие колонки сетки: длинные названия категорий занимают 4 строки, ряд выше */
+@media (min-width: 1000px) and (max-width: 1079px) {
+  .categories {
+    min-height: 186px;
+  }
+}
+
 /* ---------- Блок фильтров и сортировки ---------- */
 
 .filters {
@@ -497,9 +509,33 @@ textarea {
   list-style: none;
 }
 
-.filters summary .muted {
-  font-weight: 400;
-  font-size: 0.85rem;
+/* Число выбранных фильтров рядом с заголовком блока */
+.filters summary .badge {
+  min-width: 22px;
+  line-height: 22px;
+  border-radius: 11px;
+}
+
+/* Блок «выезжает»: высота анимируется от 0 до auto (Chrome 131+, Safari 18.4+;
+   в остальных браузерах открывается сразу) */
+.filters::details-content {
+  block-size: 0;
+  overflow: hidden;
+  transition: block-size 0.25s ease, content-visibility 0.25s allow-discrete;
+}
+
+.filters[open]::details-content {
+  block-size: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filters::details-content {
+    transition: none;
+  }
+}
+
+.filters--instant::details-content {
+  transition: none;
 }
 
 .filters summary::-webkit-details-marker {
@@ -596,6 +632,21 @@ textarea {
 
 /* ---------- Каталог ---------- */
 
+/* «Ничего не найдено» занимает всю ширину сетки карточек */
+.products__empty {
+  grid-column: 1 / -1;
+}
+
+.more {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.products[aria-busy='true'] {
+  opacity: 0.6;
+}
+
 .catalog-head {
   display: flex;
   flex-wrap: wrap;
@@ -603,6 +654,17 @@ textarea {
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 12px;
+}
+
+/* Прокрутка к результатам: заголовок не прячется под закреплённой шапкой */
+.catalog-head {
+  scroll-margin-top: 130px;
+}
+
+@media (min-width: 760px) {
+  .catalog-head {
+    scroll-margin-top: 90px;
+  }
 }
 
 .catalog-head h1 {
@@ -1063,4 +1125,42 @@ textarea {
   .admin .tabs [aria-current='page'] {
     border-left-color: var(--green-600);
   }
+}
+
+/* ---------- Страница товара: миниатюры фото, похожие товары ---------- */
+
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.gallery__thumb {
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.gallery__thumb[aria-pressed='true'] {
+  border-color: var(--green-600);
+}
+
+.gallery__thumb img {
+  display: block;
+  width: 72px;
+  height: 54px;
+  object-fit: cover;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+.similar {
+  margin-top: 28px;
 }

@@ -1,10 +1,15 @@
-// Подключение к Firebase. Версия SDK указана в одном месте — здесь;
-// остальные модули берут функции Firestore и Authentication через этот файл
+// Подключение к Firebase. Остальные модули берут функции Firestore и Authentication через этот файл.
+// Версия SDK указана здесь и в <link rel="modulepreload"> страниц (их сверяет tests/seed.test.js).
+//
+// Firestore Lite, а не полная библиотека: сайт только читает и пишет документы и считает их,
+// обновления в реальном времени (onSnapshot) и офлайн-кэш ему не нужны. Lite весит 44 КБ вместо
+// 187 КБ и обращается к базе обычными HTTP-запросами, без долгого установления потокового
+// соединения. На медленном 4G это ускорило появление каталога (отчёт за 4-ю неделю)
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js';
 import {
   getFirestore,
   connectFirestoreEmulator,
-} from 'https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js';
+} from 'https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore-lite.js';
 import {
   initializeAuth,
   indexedDBLocalPersistence,
@@ -12,7 +17,7 @@ import {
   connectAuthEmulator,
 } from 'https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js';
 
-export * from 'https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js';
+export * from 'https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore-lite.js';
 export * from 'https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js';
 
 // Сайт открыт с этого компьютера (npm run dev) или с телефона по адресу домашней сети

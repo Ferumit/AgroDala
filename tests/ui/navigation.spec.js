@@ -1,7 +1,7 @@
 // Навигация и данные на страницах: как покупатель и сотрудник ходят по сайту
 import { expect, test } from '@playwright/test';
 import { loadSeed } from '../../scripts/seed-data.js';
-import { login } from './helpers.js';
+import { login, showAll } from './helpers.js';
 
 const seed = await loadSeed();
 
@@ -128,7 +128,7 @@ test.describe('тестовые данные на страницах @desktop', 
 
   test('фото из Cloud Storage загружаются, у товара без фото — иконка', async ({ page }) => {
     await page.goto('index.html');
-    await expect(page.locator('.product-card').first()).toBeVisible();
+    await showAll(page);
     // Отключаем ленивую загрузку, чтобы браузер загрузил фото всех карточек сразу
     await page.locator('.product-card__photo').evaluateAll((images) => images.forEach((img) => { img.loading = 'eager'; }));
     await expect.poll(() => page.locator('.product-card__photo').evaluateAll((images) =>
@@ -138,6 +138,7 @@ test.describe('тестовые данные на страницах @desktop', 
 
   test('товары без остатка показаны как «Под заказ»', async ({ page }) => {
     await page.goto('index.html');
+    await showAll(page);
     await expect(page.locator('.stock--out')).toHaveCount(seed.products.filter((p) => p.stock === 0).length);
     await page.goto('product.html?id=motokultivator-5-5');
     await expect(page.getByText('Под заказ')).toBeVisible();

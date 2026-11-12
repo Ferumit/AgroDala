@@ -56,10 +56,12 @@ service cloud.firestore {
 
     function validProduct(p) {
       return p.keys().hasAll(['name', 'categoryId', 'purpose', 'type', 'manufacturer',
-                              'origin', 'price', 'priceRange', 'stock', 'createdAt'])
+                              'origin', 'price', 'priceRange', 'stock', 'inStock', 'sortName',
+                              'searchTokens', 'createdAt'])
         && p.keys().hasOnly(['name', 'categoryId', 'supplierId', 'purpose', 'type', 'manufacturer',
-                             'origin', 'country', 'price', 'priceRange', 'stock', 'description',
-                             'specs', 'images', 'thumbnail', 'imageCredit', 'createdAt'])
+                             'origin', 'country', 'price', 'priceRange', 'stock', 'inStock',
+                             'sortName', 'searchTokens', 'description', 'specs', 'images',
+                             'thumbnail', 'imageCredit', 'createdAt'])
         && isNonEmptyString(p.name, 200)
         && isNonEmptyString(p.categoryId, 40)
         // Firestore не проверяет связи сам: товар без существующей категории не попадёт в каталог
@@ -72,6 +74,15 @@ service cloud.firestore {
         && p.price is int && p.price > 0 && p.price <= 1000000000
         && p.priceRange == priceRangeOf(p.price)
         && p.stock is int && p.stock >= 0
+        // Поля для фильтра «в наличии» и сортировки по названию (derivedFields в public/js/catalog.js).
+        // Наличие обязано совпадать с остатком, иначе товар пропал бы из фильтра или попал не туда
+        && p.inStock == (p.stock > 0)
+        // Точно сверить sortName с названием правила не могут: lower() в правилах не переводит
+        // кириллицу в строчные (проверено на эмуляторе: 'ЁЛКА'.lower() == 'ЁЛКА'). Проверяется длина:
+        // строчные буквы и «е» вместо «ё» её не меняют
+        && p.sortName is string && p.sortName.size() == p.name.size()
+        // Слова для поиска правила проверить не могут (в них нет циклов) — только тип и размер
+        && p.searchTokens is list && p.searchTokens.size() <= 400
         && p.createdAt is timestamp
         && optionalString(p, 'country', 60)
         && optionalString(p, 'description', 5000)
@@ -148,6 +159,19 @@ service cloud.firestore {
         && validProduct(request.resource.data)
         && request.resource.data.createdAt == resource.data.createdAt;
       allow delete: if hasRole(['content', 'admin']);
+    }
+
+    // Сводка для блока фильтров (список производителей): читают все, меняет контент-менеджер.
+    // Других документов в meta нет
+    match /meta/{docId} {
+      allow read: if true;
+      allow create, update: if docId == 'catalog'
+        && hasRole(['content', 'admin'])
+        && request.resource.data.keys().hasOnly(['manufacturers', 'updatedAt'])
+        && request.resource.data.manufacturers is list
+        && request.resource.data.manufacturers.size() <= 200
+        && (!('updatedAt' in request.resource.data) || request.resource.data.updatedAt == request.time);
+      allow delete: if false;
     }
 
     // Поставщики — внутренние данные компании, покупателям не видны

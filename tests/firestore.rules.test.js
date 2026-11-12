@@ -22,6 +22,7 @@ import {
 } from 'firebase/firestore';
 import { buildProduct, loadSeed } from '../scripts/seed-data.js';
 import { priceRangeOf } from '../public/js/dictionaries.js';
+import { derivedFields } from '../public/js/catalog.js';
 
 let env;
 
@@ -36,8 +37,9 @@ const product = {
   manufacturer: 'GardenPro',
   origin: 'china',
   price: 6900,
-  priceRange: 'upTo20k',
   stock: 10,
+  // priceRange: 'upTo20k', inStock: true, sortName: 'лопата штыковая', searchTokens: ['ло', 'лоп', …]
+  ...derivedFields({ name: 'Лопата штыковая', manufacturer: 'GardenPro', price: 6900, stock: 10 }),
   createdAt: created,
 };
 const newProduct = { ...product, createdAt: serverTimestamp() };
@@ -79,6 +81,7 @@ beforeEach(async () => {
     await setDoc(doc(db, 'orders/o1'), { userId: 'buyer', total: 13800, status: 'new' });
     await setDoc(doc(db, 'orders/o2'), { userId: 'other', total: 6900, status: 'new' });
     await setDoc(doc(db, 'counters/orders'), { last: 2 });
+    await setDoc(doc(db, 'meta/catalog'), { manufacturers: ['GardenPro'] });
   });
 });
 
@@ -101,6 +104,9 @@ const MATRIX = [
   ['добавлять категорию', (db) => setDoc(doc(db, 'categories/c2'), category), CATALOG_EDITORS],
   ['менять категорию', (db) => updateDoc(doc(db, 'categories/hand'), { order: 9 }), CATALOG_EDITORS],
   ['удалять категорию', (db) => deleteDoc(doc(db, 'categories/hand')), CATALOG_EDITORS],
+  ['читать список производителей', (db) => getDoc(doc(db, 'meta/catalog')), ALL],
+  ['менять список производителей', (db) => setDoc(doc(db, 'meta/catalog'), { manufacturers: ['GardenPro', 'Feldwerk'] }), CATALOG_EDITORS],
+  ['удалять список производителей', (db) => deleteDoc(doc(db, 'meta/catalog')), NOBODY],
   ['читать поставщика', (db) => getDoc(doc(db, 'suppliers/s1')), ['менеджер', ...CATALOG_EDITORS]],
   ['добавлять поставщика', (db) => setDoc(doc(db, 'suppliers/s2'), supplier), CATALOG_EDITORS],
   ['менять поставщика', (db) => updateDoc(doc(db, 'suppliers/s1'), { brand: 'FW' }), CATALOG_EDITORS],
@@ -172,6 +178,40 @@ describe('каталог: проверка данных', () => {
     const db = as('content');
     await assertSucceeds(setDoc(doc(db, 'products/p3'), { ...newProduct, price, priceRange: priceRangeOf(price) }));
     await assertFails(setDoc(doc(db, 'products/p4'), { ...newProduct, price, priceRange: wrong }));
+  });
+
+  it('признак наличия должен соответствовать остатку', async () => {
+    const db = as('content');
+    await assertFails(updateDoc(doc(db, 'products/p1'), { stock: 0 }));
+    await assertSucceeds(updateDoc(doc(db, 'products/p1'), { stock: 0, inStock: false }));
+    await assertFails(updateDoc(doc(db, 'products/p1'), { inStock: true }));
+    await assertFails(setDoc(doc(db, 'products/p3'), { ...newProduct, inStock: 'yes' }));
+  });
+
+  // lower() в правилах не работает с кириллицей, поэтому проверяется только длина (см. firestore.rules)
+  it('название для сортировки — строка той же длины, что и название', async () => {
+    const db = as('content');
+    await assertFails(updateDoc(doc(db, 'products/p1'), { name: 'Лопата совковая с черенком' }));
+    await assertFails(updateDoc(doc(db, 'products/p1'), { sortName: 7 }));
+    await assertFails(setDoc(doc(db, 'products/p3'), { ...newProduct, sortName: '' }));
+    const name = 'Ёмкость для полива';
+    await assertSucceeds(updateDoc(doc(db, 'products/p1'), { name, sortName: 'емкость для полива' }));
+  });
+
+  it('слова для поиска — список не длиннее 400', async () => {
+    const db = as('content');
+    await assertFails(setDoc(doc(db, 'products/p3'), { ...newProduct, searchTokens: 'лопата' }));
+    await assertFails(setDoc(doc(db, 'products/p3'), { ...newProduct, searchTokens: Array(401).fill('ло') }));
+    await assertSucceeds(setDoc(doc(db, 'products/p3'), { ...newProduct, searchTokens: [] }));
+  });
+
+  it('сводка каталога: только документ catalog и только список производителей', async () => {
+    const db = as('content');
+    await assertFails(setDoc(doc(db, 'meta/other'), { manufacturers: [] }));
+    await assertFails(setDoc(doc(db, 'meta/catalog'), { manufacturers: 'GardenPro' }));
+    await assertFails(setDoc(doc(db, 'meta/catalog'), { manufacturers: [], secret: 1 }));
+    await assertFails(setDoc(doc(db, 'meta/catalog'), { manufacturers: [], updatedAt: created }));
+    await assertSucceeds(setDoc(doc(db, 'meta/catalog'), { manufacturers: [], updatedAt: serverTimestamp() }));
   });
 
   it('товар нельзя привязать к несуществующей категории или поставщику', async () => {

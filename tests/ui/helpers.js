@@ -66,3 +66,14 @@ export async function smallTargets(page, minSize = 40) {
         return `${el.textContent.trim().slice(0, 20) || el.className}: ${Math.round(r.width)}×${Math.round(r.height)}`;
       }), minSize);
 }
+
+// Каталог показывает товары по 12: нажимаем «Показать ещё», пока кнопка не исчезнет
+export async function showAll(page) {
+  const more = page.locator('[data-more]');
+  await page.locator('.product-card').first().waitFor();
+  while (await more.isVisible()) {
+    const before = await page.locator('.product-card').count();
+    await more.click();
+    await page.waitForFunction((n) => document.querySelectorAll('.product-card').length > n, before);
+  }
+}

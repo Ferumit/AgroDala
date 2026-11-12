@@ -32,7 +32,21 @@ async function shots(options, list) {
   await context.close();
 }
 
-const openFilters = (page) => page.locator('.filters summary').click();
+// Блок фильтров с выбранными фильтрами: на кнопке уже видно, сколько товаров найдётся
+async function chooseFilters(page) {
+  await page.locator('.filters summary').click();
+  for (const text of ['Для дачи и сада', 'Китай', 'Только в наличии']) {
+    await page.locator('.filters .chip', { hasText: text }).click();
+  }
+  await page.locator('#sort').selectOption('priceAsc');
+  await page.waitForFunction(() => /\d/.test(document.querySelector('[data-apply]').textContent));
+}
+
+// Карточка товара, открытая из подборки: есть ссылка «← К результатам»
+async function fromResults(page) {
+  await page.locator('.product-card').first().click();
+  await page.locator('.similar .product-card').first().waitFor();
+}
 
 // Панель эмуляторов: данные в базе и учётные записи
 const UI = 'http://127.0.0.1:4000/';
@@ -57,7 +71,7 @@ async function uiShots() {
 
 await shots(PC, [
   { name: '01-glavnaya-pk', url: 'index.html', marker: '.product-card' },
-  { name: '02-filtry-pk', url: 'index.html', marker: '#sort', act: openFilters, fullPage: false },
+  { name: '02-filtry-pk', url: 'index.html', marker: '#sort', act: chooseFilters, fullPage: false },
   { name: '03-kategoriya-pk', url: 'index.html?category=watering', marker: '.product-card' },
   { name: '06-tovar-pk', url: 'product.html?id=diskator-2-5', marker: '.specs' },
   { name: '08-korzina-pk', who: 'buyer', url: 'cart.html', marker: '.cart-item' },
@@ -67,11 +81,17 @@ await shots(PC, [
   { name: '14-admin-zakazy-pk', who: 'admin', url: 'admin.html#orders', marker: '[data-table="orders"] tr' },
   { name: '15-admin-import-pk', who: 'admin', url: 'admin.html#import', marker: '#import-file' },
   { name: '16-404-pk', url: 'no/such/page', marker: '.empty-state', fullPage: false },
+  { name: '24-podborka-pk', url: 'index.html?purpose=garden&origin=china&stock=1&sort=priceAsc', marker: '.product-card' },
+  { name: '25-poisk-pk', url: 'index.html?q=лопаты', marker: '.product-card', fullPage: false },
+  { name: '26-nichego-pk', url: 'index.html?q=xyz&stock=1', marker: '.products__empty', fullPage: false },
+  { name: '27-tovar-iz-podborki-pk', url: 'index.html?category=hand&sort=priceAsc', act: fromResults, marker: '.back-link' },
 ]);
 
 await shots(phone(390, 844), [
   { name: '04-glavnaya-telefon', url: 'index.html', marker: '.product-card', fullPage: false },
-  { name: '05-filtry-telefon', url: 'index.html', marker: '#sort', act: openFilters, fullPage: false },
+  { name: '05-filtry-telefon', url: 'index.html', marker: '#sort', act: chooseFilters, fullPage: false },
+  { name: '28-podborka-telefon', url: 'index.html?purpose=garden&origin=china&stock=1&sort=priceAsc', marker: '.product-card', fullPage: false },
+  { name: '29-poisk-telefon', url: 'index.html?q=мотоблок', marker: '.product-card', fullPage: false },
   { name: '07-tovar-telefon', url: 'product.html?id=diskator-2-5', marker: '.specs', fullPage: false },
   { name: '12-korzina-telefon', who: 'buyer', url: 'cart.html', marker: '.cart-item' },
   { name: '17-kabinet-telefon', who: 'buyer', url: 'account.html', marker: '[data-orders] .status' },

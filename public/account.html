@@ -6,6 +6,13 @@
   <title>Личный кабинет — AgroDala</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="img/icons/sprout.svg">
+  <!-- Библиотека Firebase начинает загружаться сразу, а не после цепочки модулей
+       страница → js/firebase.js → gstatic.com (версия — как в js/firebase.js) -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js">
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore-lite.js">
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js">
+  <link rel="modulepreload" href="js/firebase.js">
   <script type="module" src="js/layout.js"></script>
   <script type="module" src="js/account.js"></script>
 </head>
