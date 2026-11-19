@@ -920,6 +920,9 @@ textarea {
 
 .table-wrap {
   overflow-x: auto;
+  /* Скрытые подписи (.visually-hidden) в широкой таблице позиционируются внутри неё,
+     а не от края страницы — иначе страница становилась бы шире экрана */
+  position: relative;
 }
 
 .table {
@@ -1163,4 +1166,112 @@ textarea {
 
 .similar {
   margin-top: 28px;
+}
+
+/* ---------- Окна, формы админ-панели, заказ ---------- */
+
+.modal {
+  width: min(760px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 20px;
+  border: 0;
+  border-radius: var(--radius);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.25);
+}
+
+.modal::backdrop {
+  background: rgb(22 61 28 / 0.35);
+}
+
+.modal__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.modal__head h2 {
+  margin: 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 14px;
+}
+
+.field--wide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 560px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .modal {
+    padding: 16px;
+  }
+}
+
+.photo-field {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.photo-field img {
+  flex: none;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.history {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  display: grid;
+  gap: 6px;
+}
+
+.row-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.btn--small {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+}
+
+.inline-select {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.inline-select select {
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.import-report {
+  margin-top: 16px;
+}
+
+.import-report ul {
+  padding-left: 20px;
+}
+
+.order-done {
+  max-width: 640px;
+}
+
+.cart-items[aria-busy='true'] {
+  opacity: 0.6;
+  pointer-events: none;
 }

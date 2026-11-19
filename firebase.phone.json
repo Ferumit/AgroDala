@@ -6,6 +6,20 @@
   "storage": {
     "rules": "storage.rules"
   },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "*.log"
+      ],
+      "predeploy": [
+        "node scripts/sync-shared.js"
+      ]
+    }
+  ],
   "hosting": {
     "public": "public",
     "ignore": [
@@ -31,6 +45,10 @@
     },
     "storage": {
       "port": 28575,
+      "host": "0.0.0.0"
+    },
+    "functions": {
+      "port": 28579,
       "host": "0.0.0.0"
     },
     "hosting": {

@@ -1,8 +1,10 @@
-// Личный кабинет: профиль, адрес доставки, история заказов, выход
+// Личный кабинет: профиль, адрес доставки, история заказов с подробностями, выход.
+// Новый заказ (ещё не подтверждённый менеджером) покупатель может отменить сам
 import {
   auth,
   db,
   doc,
+  getDoc,
   updateDoc,
   collection,
   query,
@@ -14,6 +16,7 @@ import {
 import { currentUser, ensureProfile, STAFF_ROLES } from './auth.js';
 import { ORDER_STATUSES, ROLES } from './dictionaries.js';
 import { escapeHtml, formatPrice, statusLabel } from './ui.js';
+import { openOrderDialog } from './order-dialog.js';
 
 const form = document.querySelector('[data-profile]');
 const message = document.querySelector('[data-message]');
@@ -41,10 +44,13 @@ function fillProfile(user, profile) {
   }
 }
 
+let orders = new Map();
+
 async function loadOrders(uid) {
   const snap = await getDocs(
     query(collection(db, 'orders'), where('userId', '==', uid), orderBy('createdAt', 'desc'))
   );
+  orders = new Map(snap.docs.map((d) => [d.id, d.data()]));
   if (snap.empty) {
     ordersBody.innerHTML = '<tr><td colspan="4" class="muted">Заказов пока нет</td></tr>';
     return;
@@ -53,7 +59,8 @@ async function loadOrders(uid) {
     .map((d) => {
       const o = d.data();
       return `<tr>
-        <td data-label="Номер">${escapeHtml(o.number)}</td>
+        <td data-label="Номер"><button class="link-button" type="button" data-order="${escapeHtml(d.id)}"
+          title="Состав и история заказа">${escapeHtml(o.number)}</button></td>
         <td data-label="Дата">${o.createdAt?.toDate().toLocaleDateString('ru-RU') ?? ''}</td>
         <td data-label="Сумма">${formatPrice(o.total)}</td>
         <td data-label="Статус">${statusLabel(o.status, ORDER_STATUSES)}</td>
@@ -61,6 +68,29 @@ async function loadOrders(uid) {
     })
     .join('');
 }
+
+const cancelActions = (order) => (order.status === 'new' ? ['cancelled'] : []);
+
+ordersBody.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-order]');
+  if (!button) return;
+  const id = button.dataset.order;
+  const order = orders.get(id);
+  openOrderDialog(order, {
+    actions: cancelActions(order),
+    onAction: async (status) => {
+      const { call, callErrorMessage } = await import('./functions.js');
+      try {
+        await call('setOrderStatus', { orderId: id, status });
+      } catch (err) {
+        throw new Error(callErrorMessage(err));
+      }
+      const updated = (await getDoc(doc(db, 'orders', id))).data();
+      await loadOrders(auth.currentUser.uid);
+      return { order: updated, actions: cancelActions(updated) };
+    },
+  });
+});
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();

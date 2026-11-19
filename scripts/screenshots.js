@@ -108,6 +108,135 @@ await shots({ viewport: { width: 768, height: 1024 } }, [
   { name: '21-glavnaya-planshet', url: 'index.html', marker: '.product-card', fullPage: false },
 ]);
 
+// 5-я неделя: полный сценарий покупки и работа сотрудников. Шаги идут по порядку и меняют
+// данные (заказ, товар, категория), поэтому выполняются после остальных скриншотов
+async function save(page, name, fullPage = false) {
+  await page.evaluate(() => document.querySelectorAll('img').forEach((img) => { img.loading = 'eager'; }));
+  await page.waitForFunction(() => [...document.images].every((img) => img.complete));
+  await page.screenshot({ path: `${OUT}${name}.png`, fullPage });
+  console.log(name);
+}
+
+async function as(who, next, options = PC) {
+  const context = await browser.newContext({ baseURL: BASE, locale: 'ru-RU', ...options });
+  const page = await context.newPage();
+  page.on('dialog', (d) => d.accept());
+  await login(page, who, next);
+  return { page, done: () => context.close() };
+}
+
+async function week5() {
+  // Покупатель: товар → корзина → оформление → кабинет
+  const farmer = await as('farmer', 'account.html');
+  let page = farmer.page;
+  await page.goto('product.html?id=lopata-shtykovaya');
+  await page.getByRole('button', { name: 'В корзину' }).click();
+  await page.locator('[data-cart-status]:not([hidden])').waitFor();
+  await save(page, '30-v-korzinu-pk');
+  await page.goto('cart.html');
+  await page.locator('.cart-item').nth(1).waitFor();
+  await page.getByText('Доставка', { exact: true }).click();
+  await page.locator('#comment').fill('Позвонить за час до доставки');
+  await save(page, '31-oformlenie-pk', true);
+  await page.getByRole('button', { name: 'Оформить заказ' }).click();
+  const title = page.getByRole('heading', { name: /оформлен/ });
+  await title.waitFor();
+  const number = (await title.textContent()).match(/AD-\d{6}/)[0];
+  await save(page, '32-zakaz-oformlen-pk');
+  await page.goto('account.html');
+  await page.getByRole('button', { name: number }).click();
+  await page.getByRole('dialog').waitFor();
+  await save(page, '33-zakaz-v-kabinete-pk');
+  await farmer.done();
+
+  // Менеджер: новый заказ → подтверждение
+  const manager = await as('manager', 'admin.html');
+  page = manager.page;
+  await page.goto('admin.html#orders');
+  await page.locator('[data-order-filter]').selectOption('new');
+  await page.getByRole('button', { name: number }).click();
+  await page.getByRole('dialog').waitFor();
+  await save(page, '34-admin-zakaz-pk');
+  await page.getByRole('dialog').getByRole('button', { name: 'Подтвердить' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Начать комплектацию' }).waitFor();
+  await save(page, '35-admin-status-pk');
+  await manager.done();
+
+  // Контент-менеджер: новый товар с фото, новая категория
+  const content = await as('content', 'admin.html');
+  page = content.page;
+  await page.getByRole('button', { name: 'Добавить товар' }).click();
+  const form = page.getByRole('dialog', { name: 'Новый товар' });
+  await form.getByLabel('Название').fill('Вилы садовые 5-зубые усиленные');
+  await form.getByLabel('Категория').selectOption('hand');
+  await form.getByLabel('Производитель').fill('GardenPro');
+  await form.getByLabel('Страна производителя').fill('Китай');
+  await form.getByLabel('Цена, ₸').fill('7400');
+  await form.getByLabel('Остаток, шт.').fill('25');
+  await form.getByLabel('Описание').fill('Кованые вилы с пятью зубьями и черенком из ясеня 120 см.');
+  await form.getByLabel(/Характеристики/).fill('Число зубьев: 5\nДлина черенка: 120 см\nМатериал: кованая сталь');
+  await form.getByLabel(/Фотография/).setInputFiles('seed/images/vily-sadovye-4.jpg');
+  await form.locator('[data-photo-preview]').waitFor();
+  await save(page, '36-admin-tovar-forma-pk');
+  await form.getByRole('button', { name: 'Сохранить' }).click();
+  await page.locator('[data-admin-message]:not([hidden])').waitFor();
+  await page.getByRole('link', { name: 'Вилы садовые 5-зубые усиленные' }).click();
+  await page.locator('.specs').waitFor();
+  await save(page, '37-noviy-tovar-pk');
+  await page.goto('admin.html#categories');
+  await page.getByRole('button', { name: 'Добавить категорию' }).click();
+  const category = page.getByRole('dialog', { name: 'Новая категория' });
+  await category.getByLabel('Название').fill('Теплицы и парники');
+  await category.getByLabel('Назначение').selectOption('garden');
+  await category.locator('.chip', { has: page.locator('input[value="sprout"]') }).click();
+  await save(page, '38-admin-kategoriya-pk');
+  await content.done();
+
+  // Администратор: импорт товаров (с ошибками в двух строках) и клиентов
+  const admin = await as('admin', 'admin.html');
+  page = admin.page;
+  await page.goto('admin.html#import');
+  const csv = 'Название;Категория;Тип;Производитель;Происхождение;Цена;Остаток\n' +
+    'Тяпка-мотыга;Ручной садовый инструмент;Мини-инструмент;Terrano;Европа;4 900;30\n' +
+    'Ведро оцинкованное 12 л;Уборка и хранение урожая;Мини-инструмент;GardenPro;Китай;2 600;100\n' +
+    'Сеялка овощная;Посевная техника;Мини-инструмент;Agripol;Польша;38 000;5\n' +
+    'Опрыскиватель 8 л;Полив;Мини-инструмент;GardenPro;Китай;девять тысяч;3\n';
+  await page.locator('#import-file').setInputFiles({ name: 'tovary.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+  await page.getByRole('button', { name: 'Загрузить' }).click();
+  await page.locator('[data-import-report]:not([hidden])').waitFor();
+  await save(page, '39-import-tovarov-pk', true);
+  await page.getByText('Клиенты', { exact: true }).click();
+  await page.locator('#import-file').setInputFiles('public/import/klienty-primer.csv');
+  await page.getByRole('button', { name: 'Загрузить' }).click();
+  await page.getByText('Клиентов добавлено').waitFor();
+  await save(page, '40-import-klientov-pk', true);
+  await admin.done();
+
+  // Телефон: оформление и заказ в кабинете
+  const buyer = await as('buyer', 'cart.html', phone(390, 844));
+  page = buyer.page;
+  await page.locator('.cart-item').first().waitFor();
+  await page.locator('[data-checkout]').scrollIntoViewIfNeeded();
+  await save(page, '41-oformlenie-telefon', true);
+  await page.goto('account.html');
+  await page.locator('[data-orders] [data-order]').first().click();
+  await page.getByRole('dialog').waitFor();
+  await save(page, '42-zakaz-telefon');
+  await buyer.done();
+}
+
+await week5();
 await uiShots();
+
+// Журнал Cloud Functions в панели эмуляторов: заказы, смена статусов, импорт
+{
+  const context = await browser.newContext({ viewport: { width: 1366, height: 900 }, locale: 'ru-RU' });
+  const page = await context.newPage();
+  await page.goto(`${UI}logs?q=${encodeURIComponent('Заказ')}`);
+  await page.getByText(/Заказ AD-/).first().waitFor();
+  await page.screenshot({ path: `${OUT}43-zhurnal-funkciy.png` });
+  console.log('43-zhurnal-funkciy');
+  await context.close();
+}
 
 await browser.close();

@@ -25,10 +25,10 @@ export * from 'https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js';
 const isLoopback = ['localhost', '127.0.0.1'].includes(location.hostname);
 const isPrivateNetwork =
   /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.)/.test(location.hostname);
-const isLocal = isLoopback || isPrivateNetwork;
-const emulatorHost = isLoopback ? '127.0.0.1' : location.hostname;
+export const isLocal = isLoopback || isPrivateNetwork;
+export const emulatorHost = isLoopback ? '127.0.0.1' : location.hostname;
 // Порты эмуляторов — как в firebase.json (совпадение проверяет tests/pages.test.js)
-const PORTS = { firestore: 28573, auth: 28574, storage: 28575 };
+export const PORTS = { firestore: 28573, auth: 28574, storage: 28575, functions: 28579 };
 
 // Настоящий проект Firebase подключается на этапе публикации (неделя 6 по ТЗ)
 const productionConfig = null;
@@ -37,7 +37,7 @@ if (!isLocal && !productionConfig) {
   throw new Error('Проект Firebase для публикации ещё не настроен');
 }
 
-const app = initializeApp(
+export const app = initializeApp(
   isLocal
     ? {
         projectId: 'demo-agrodala',

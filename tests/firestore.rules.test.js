@@ -56,7 +56,9 @@ const as = (uid) =>
 
 beforeAll(async () => {
   env = await initializeTestEnvironment({
-    projectId: 'demo-agrodala',
+    // Отдельный проект: в основном (demo-agrodala) работают триггеры Cloud Functions,
+    // которые сами дописывают meta/catalog при изменении товаров
+    projectId: 'demo-agrodala-rules',
     firestore: { rules: readFileSync('firestore.rules', 'utf8') },
   });
 });

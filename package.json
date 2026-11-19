@@ -5,15 +5,20 @@
   "description": "AgroDala — интернет-магазин сельскохозяйственного инструмента (учебный проект)",
   "type": "module",
   "scripts": {
-    "start": "firebase emulators:exec --ui --only auth,firestore,storage,hosting \"node scripts/start.js\"",
-    "start:phone": "firebase emulators:exec --ui --config firebase.phone.json --only auth,firestore,storage,hosting \"node scripts/start.js\"",
+    "postinstall": "npm install --prefix functions --no-audit --no-fund",
+    "prestart": "node scripts/sync-shared.js",
+    "start": "firebase emulators:exec --ui --only auth,firestore,storage,functions,hosting \"node scripts/start.js\"",
+    "prestart:phone": "node scripts/sync-shared.js",
+    "start:phone": "firebase emulators:exec --ui --config firebase.phone.json --only auth,firestore,storage,functions,hosting \"node scripts/start.js\"",
+    "predev": "node scripts/sync-shared.js",
     "dev": "firebase emulators:start",
     "dev:phone": "firebase emulators:start --config firebase.phone.json",
     "seed": "node scripts/seed.js",
-    "test": "firebase emulators:exec --only firestore,storage \"vitest run\"",
-    "test:ui": "firebase emulators:exec --only auth,firestore,storage,hosting \"node scripts/seed.js && playwright test --project=phone --project=desktop\"",
-    "test:browsers": "firebase emulators:exec --only auth,firestore,storage,hosting \"node scripts/seed.js && playwright test --project=firefox --project=webkit\"",
-    "screenshots": "firebase emulators:exec --ui --only auth,firestore,storage,hosting \"node scripts/seed.js && node scripts/screenshots.js\""
+    "pretest": "node scripts/sync-shared.js",
+    "test": "firebase emulators:exec --only auth,firestore,storage,functions \"vitest run\"",
+    "test:ui": "firebase emulators:exec --only auth,firestore,storage,functions,hosting \"node scripts/seed.js && playwright test --project=phone --project=desktop\"",
+    "test:browsers": "firebase emulators:exec --only auth,firestore,storage,functions,hosting \"node scripts/seed.js && playwright test --project=firefox --project=webkit\"",
+    "screenshots": "firebase emulators:exec --ui --only auth,firestore,storage,functions,hosting \"node scripts/seed.js && node scripts/screenshots.js\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "6.0.0",

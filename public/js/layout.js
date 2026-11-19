@@ -69,10 +69,17 @@ onAuthStateChanged(auth, async (user) => {
     if (profile) label.textContent = profile.name.split(' ')[0];
     adminLink.hidden = !STAFF_ROLES.includes(profile?.role);
     const cart = (await getDoc(doc(db, 'carts', user.uid))).data();
-    const count = Object.values(cart?.items ?? {}).reduce((sum, qty) => sum + qty, 0);
-    cartBadge.textContent = count;
-    cartBadge.hidden = count === 0;
+    showCartCount(cart?.items);
   } catch (err) {
     console.error(err);
   }
 });
+
+function showCartCount(items) {
+  const count = Object.values(items ?? {}).reduce((sum, qty) => sum + qty, 0);
+  cartBadge.textContent = count;
+  cartBadge.hidden = count === 0;
+}
+
+// Корзину изменили на этой странице (js/cart-store.js) — счётчик обновляется без запроса к базе
+addEventListener('cart-changed', (event) => showCartCount(event.detail));

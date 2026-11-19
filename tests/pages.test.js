@@ -22,6 +22,16 @@ describe('предзагрузка библиотеки Firebase', () => {
   });
 });
 
+// Функции и загрузка фото подключаются отдельными модулями только на страницах, где нужны
+// (корзина, кабинет, администрирование). Версия SDK у них должна быть та же, что в firebase.js
+it('все модули сайта берут Firebase одной версии', () => {
+  const version = imported[0].split('/')[4];
+  for (const file of readdirSync('public/js')) {
+    const urls = readFileSync(`public/js/${file}`, 'utf8').match(/https:\/\/www\.gstatic\.com\/firebasejs\/[^/]+/g) ?? [];
+    for (const url of urls) expect(url.split('/')[4], file).toBe(version);
+  }
+});
+
 describe('порты эмуляторов', () => {
   it('в js/firebase.js и firebase.phone.json те же, что в firebase.json', () => {
     const ports = (file) => JSON.parse(readFileSync(file, 'utf8')).emulators;
@@ -29,7 +39,12 @@ describe('порты эмуляторов', () => {
     const inBrowser = JSON.parse(
       firebaseJs.match(/const PORTS = (\{[^}]+\})/)[1].replace(/(\w+):/g, '"$1":')
     );
-    expect(inBrowser).toEqual({ firestore: main.firestore.port, auth: main.auth.port, storage: main.storage.port });
+    expect(inBrowser).toEqual({
+      firestore: main.firestore.port,
+      auth: main.auth.port,
+      storage: main.storage.port,
+      functions: main.functions.port,
+    });
     const phone = ports('firebase.phone.json');
     for (const name of Object.keys(main).filter((n) => main[n].port)) {
       expect(phone[name].port, name).toBe(main[name].port);

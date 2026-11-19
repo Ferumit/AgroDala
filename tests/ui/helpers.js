@@ -77,3 +77,19 @@ export async function showAll(page) {
     await page.waitForFunction((n) => document.querySelectorAll('.product-card').length > n, before);
   }
 }
+
+// Новый покупатель для сценариев, которые меняют заказы и корзину: тестовые учётные записи
+// не трогаем, их заказы и корзины проверяют другие тесты
+export async function register(page, name = 'Новый Покупатель') {
+  const email = `buyer-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@agrodala.example`;
+  await page.goto('login.html');
+  await page.getByRole('tab', { name: 'Регистрация' }).click();
+  await page.locator('#register-name').fill(name);
+  await page.locator('#register-email').fill(email);
+  await page.locator('#register-password').fill('secret-123');
+  await page.locator('#register-password2').fill('secret-123');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Зарегистрироваться' }).click();
+  await page.waitForURL('**/account.html');
+  return email;
+}

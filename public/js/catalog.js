@@ -27,7 +27,7 @@ export const SEARCH_FIELD = 'searchTokens';
 const MULTI = { purpose: PURPOSES, type: TYPES, origin: ORIGINS };
 
 // Поля товара, которые вычисляются из других полей и нужны только для запросов каталога.
-// Их заполняет тот, кто сохраняет товар: сейчас скрипт тестовых данных, с 5-й недели — админ-панель.
+// Их заполняет тот, кто сохраняет товар: админ-панель, импорт CSV (Cloud Function) и скрипт тестовых данных.
 // Правила Firestore проверяют, что priceRange, inStock и sortName соответствуют цене, остатку и названию
 export function derivedFields({ name, manufacturer, price, stock }) {
   return {

@@ -73,7 +73,7 @@ export function statusPath(status, method) {
 }
 
 // Демонстрационный заказ: цены фиксируются на момент оформления, сумма считается из них.
-// В настоящей работе это будут делать Cloud Functions (5-я неделя)
+// Настоящие заказы так же собирает Cloud Function placeOrder (functions/index.js)
 export function buildOrder(order, { products, uidOf, now = Date.now() }) {
   const account = ACCOUNTS.find((a) => a.key === order.user);
   const items = order.items.map(({ productId, qty }) => {

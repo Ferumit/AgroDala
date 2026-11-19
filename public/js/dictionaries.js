@@ -39,6 +39,30 @@ export const ORDER_STATUSES = {
   cancelled: 'Отменён',
 };
 
+// Ход заказа (ТЗ, п. 1.5): из какого статуса в какие можно перейти.
+// Передача покупателю зависит от способа получения: доставка или самовывоз со склада.
+// Отменить можно до передачи в доставку или на выдачу. Проверяет это Cloud Function
+// setOrderStatus, а административная панель по этой же таблице показывает только допустимые кнопки
+export function nextStatuses(status, method) {
+  const handover = method === 'delivery' ? 'shipped' : 'readyForPickup';
+  const flow = {
+    new: ['confirmed', 'cancelled'],
+    confirmed: ['picking', 'cancelled'],
+    picking: [handover, 'cancelled'],
+    shipped: ['completed'],
+    readyForPickup: ['completed'],
+  };
+  return flow[status] ?? [];
+}
+
+// Больше штук одного товара в одном заказе не принимается: крупный опт оформляется через менеджера
+export const MAX_ITEM_QTY = 99;
+
+export const DELIVERY_METHODS = {
+  pickup: 'Самовывоз со склада',
+  delivery: 'Доставка',
+};
+
 export const ROLES = {
   customer: 'Покупатель',
   manager: 'Менеджер',

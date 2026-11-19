@@ -2,6 +2,8 @@
 import { db, collection, doc, getDoc, getDocs, limit, orderBy, photoUrl, query, where } from './firebase.js';
 import { escapeHtml, formatPrice, icon, stockLabel } from './ui.js';
 import { ORIGINS, PURPOSES, TYPES } from './dictionaries.js';
+import { currentUser } from './auth.js';
+import { addToCart } from './cart-store.js';
 
 const root = document.querySelector('[data-product]');
 const id = new URLSearchParams(location.search).get('id');
@@ -112,10 +114,10 @@ function render(p, category) {
         <h1>${escapeHtml(p.name)}</h1>
         ${stockLabel(p.stock)}
         <p class="product__price">${formatPrice(p.price)}</p>
-        <button class="btn" type="button" data-add-to-cart disabled
-                title="Корзина подключается на 5-й неделе разработки">
+        <button class="btn" type="button" data-add-to-cart>
           ${icon('shopping-cart')} В корзину
         </button>
+        <p class="form-message" data-cart-status role="status" hidden></p>
         <dl class="product__facts">
           <dt>Производитель</dt><dd>${escapeHtml(p.manufacturer)}</dd>
           <dt>Страна</dt><dd>${escapeHtml(country(p))}</dd>
@@ -132,6 +134,33 @@ function render(p, category) {
     </section>`;
 }
 
+// Корзина хранится в базе у вошедшего покупателя (carts/{uid}), поэтому сначала — вход.
+// После входа покупатель вернётся на эту же страницу
+async function onAddToCart(button, product) {
+  const status = root.querySelector('[data-cart-status]');
+  const user = await currentUser();
+  if (!user) {
+    location.href = `login.html?next=${encodeURIComponent(`product.html?id=${id}`)}`;
+    return;
+  }
+  button.disabled = true;
+  try {
+    const items = await addToCart(user.uid, id);
+    const backorder = items[id] > product.stock
+      ? ` Сейчас на складе ${product.stock} шт., остальное — под заказ: срок поставки уточнит менеджер.`
+      : '';
+    status.innerHTML = `В корзине: ${items[id]} шт. <a href="cart.html">Перейти в корзину</a>.${backorder}`;
+    status.className = 'form-message form-message--success';
+  } catch (err) {
+    console.error(err);
+    status.textContent = 'Не удалось добавить в корзину. Попробуйте ещё раз.';
+    status.className = 'form-message form-message--error';
+  } finally {
+    status.hidden = false;
+    button.disabled = false;
+  }
+}
+
 async function main() {
   if (!id) {
     root.innerHTML = '<p>Товар не указан. <a href="index.html">Вернуться в каталог</a></p>';
@@ -145,6 +174,7 @@ async function main() {
   const product = snap.data();
   const categorySnap = await getDoc(doc(db, 'categories', product.categoryId));
   render(product, categorySnap.data());
+  root.querySelector('[data-add-to-cart]').addEventListener('click', (event) => onAddToCart(event.currentTarget, product));
   // Похожие товары — дополнение: если не загрузились, страница товара всё равно работает
   renderSimilar(id, product, categorySnap.data()).catch((err) => console.error(err));
 }

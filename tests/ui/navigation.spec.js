@@ -158,6 +158,8 @@ test.describe('тестовые данные на страницах @desktop', 
   test('сотрудник видит заказы всех покупателей и все статусы', async ({ page }) => {
     await login(page, 'manager', 'admin.html');
     await page.goto('admin.html#orders');
+    // По умолчанию показаны заказы в работе; выполненные и отменённые — в фильтре «Все»
+    await page.locator('[data-order-filter]').selectOption('');
     await expect(page.locator('[data-table="orders"] tr')).toHaveCount(seed.orders.length);
     for (const status of ['Новый', 'Подтверждён', 'Комплектуется', 'Передан в доставку', 'Готов к выдаче', 'Выполнен', 'Отменён']) {
       await expect(page.locator('[data-table="orders"]')).toContainText(status);
