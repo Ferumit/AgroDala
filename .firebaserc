@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "demo-agrodala"
+    "default": "demo-agrodala",
+    "prod": "agrodala"
   }
 }

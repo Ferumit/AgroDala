@@ -5,10 +5,10 @@ import {
   httpsCallable,
   connectFunctionsEmulator,
 } from 'https://www.gstatic.com/firebasejs/13.0.0/firebase-functions.js';
-import { app, emulatorHost, isLocal, PORTS } from './firebase.js';
+import { app, backendFunctionsUrl, emulatorHost, isLocal, PORTS, REGION } from './firebase.js';
 
-// Регион — как в functions/index.js (REGION)
-const functions = getFunctions(app, 'europe-central2');
+// Функции в облаке — в регионе REGION; функции на ноутбуке разработчика — по адресу backendFunctionsUrl
+const functions = getFunctions(app, backendFunctionsUrl ?? REGION);
 if (isLocal) connectFunctionsEmulator(functions, emulatorHost, PORTS.functions);
 
 // Результат функции. Ошибки приходят с понятным текстом (message) и кодом (code: functions/…)
@@ -23,8 +23,13 @@ export function callErrorMessage(err) {
   const shown = ['functions/invalid-argument', 'functions/failed-precondition', 'functions/permission-denied',
     'functions/not-found', 'functions/unauthenticated'];
   if (shown.includes(err?.code)) return err.message;
-  if (err?.code === 'functions/unavailable' || err?.code === 'functions/deadline-exceeded') {
-    return 'Нет связи с сервером. Проверьте интернет и попробуйте снова.';
+  // Ответа от функции нет совсем (нет сети, сервер выключен): у ошибки вместо текста — только код
+  const noReply = err?.message === String(err?.code).replace('functions/', '');
+  if (noReply || err?.code === 'functions/unavailable' || err?.code === 'functions/deadline-exceeded') {
+    return backendFunctionsUrl
+      ? 'Сервер магазина сейчас недоступен: в учебной версии заказы обрабатывает компьютер разработчика, ' +
+          'и он может быть выключен. Каталог работает, попробуйте оформить позже.'
+      : 'Нет связи с сервером. Проверьте интернет и попробуйте снова.';
   }
   return 'Не получилось. Попробуйте ещё раз.';
 }

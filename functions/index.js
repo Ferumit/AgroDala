@@ -2,15 +2,18 @@
 //   placeOrder      — оформление заказа: сумма по ценам каталога, резерв товара, номер заказа;
 //   setOrderStatus  — смена статуса менеджером (или отмена покупателем нового заказа);
 //   importCsv       — импорт товаров и клиентов из Excel (CSV);
-//   syncCatalogMeta — список производителей для фильтра при изменении товаров.
+//   syncCatalogMeta — список производителей для фильтра при изменении товаров;
+//   uploadProductPhoto, deleteProductPhotos, photo, refreshCatalogMeta — нужны, когда функции
+//     работают на ноутбуке разработчика с настоящей базой (npm run backend, см. README).
 // Функции работают через Admin SDK, который не проверяет firestore.rules, поэтому права
 // проверяются здесь же: по входу (request.auth) и роли из профиля users/{uid}
 import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { FieldValue, Timestamp, getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 import { logger, setGlobalOptions } from 'firebase-functions/v2';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
-import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { HttpsError, onCall, onRequest } from 'firebase-functions/v2/https';
 import { productFromRecord, parseCsv, toRecords, userFromRecord } from './lib/csv.js';
 import { OrderError, checkStatusChange, orderNumber, priceOrder, stockToReturn, validateCheckout } from './lib/orders.js';
 import { ORDER_STATUSES } from './shared/dictionaries.js';
@@ -34,12 +37,31 @@ function signedInUid(request) {
   return request.auth.uid;
 }
 
+// Эмулятор функций не проверяет подпись токена входа: он рассчитан на компьютер разработчика и
+// демо-проект. Когда эмулятор работает с настоящим проектом и открыт в интернет (npm run backend),
+// подпись проверяется здесь через Firebase Authentication — иначе любой мог бы назваться
+// администратором, подставив чужой uid. В облаке токен проверяет сама платформа
+const VERIFY_TOKEN_HERE =
+  process.env.FUNCTIONS_EMULATOR === 'true' && !String(process.env.GCLOUD_PROJECT).startsWith('demo-');
+
+async function verifiedAuth(request) {
+  const token = /^Bearer (.+)$/.exec(request.rawRequest?.headers?.authorization ?? '')?.[1];
+  if (!token) return undefined;
+  try {
+    const decoded = await getAuth().verifyIdToken(token);
+    return { uid: decoded.uid, token: decoded };
+  } catch {
+    throw new HttpsError('unauthenticated', 'Вход устарел. Выйдите и войдите снова.');
+  }
+}
+
 // Ошибки из lib/ (их текст можно показать покупателю) превращаются в HttpsError —
 // браузер получит code, message и details. Остальные ошибки пишутся в журнал,
 // а наружу уходит общее сообщение без подробностей устройства системы
 function handle(handler) {
   return async (request) => {
     try {
+      if (VERIFY_TOKEN_HERE) request.auth = await verifiedAuth(request);
       return await handler(request);
     } catch (err) {
       if (err instanceof HttpsError) throw err;
@@ -220,6 +242,8 @@ async function importProducts(records) {
     await batch.commit();
   }
   const updated = writes.filter((w) => w.exists).length;
+  // Триггер syncCatalogMeta тоже пересчитает список, но на ноутбуке (npm run backend) он не срабатывает
+  if (writes.length) await rebuildCatalogMeta();
   return { created: writes.length - updated, updated, errors };
 }
 
@@ -281,9 +305,94 @@ export const syncCatalogMeta = onDocumentWritten('products/{productId}', async (
   const before = event.data?.before.data();
   const after = event.data?.after.data();
   if (before && after && before.manufacturer === after.manufacturer) return;
+  await rebuildCatalogMeta();
+});
+
+async function rebuildCatalogMeta() {
   const snap = await db.collection('products').select('manufacturer').get();
   const manufacturers = [...new Set(snap.docs.map((d) => d.get('manufacturer')).filter(Boolean))].sort((a, b) =>
     a.localeCompare(b)
   );
   await db.doc('meta/catalog').set({ manufacturers, updatedAt: FieldValue.serverTimestamp() });
+}
+
+// ---------- Функции для работы на ноутбуке (npm run backend) ----------
+// Эмулятор функций получает события только от эмулятора Firestore, а не от настоящей базы,
+// поэтому syncCatalogMeta там не срабатывает: админ-панель после изменения товара вызывает это
+const CATALOG_ROLES = ['content', 'admin'];
+
+async function requireRole(request, roles) {
+  const uid = signedInUid(request);
+  if (!roles.includes(await roleOf(uid))) throw new HttpsError('permission-denied', 'Недостаточно прав.');
+  return uid;
+}
+
+export const refreshCatalogMeta = onCall(
+  handle(async (request) => {
+    await requireRole(request, CATALOG_ROLES);
+    await rebuildCatalogMeta();
+    return { ok: true };
+  })
+);
+
+// Хранилище эмулятора нельзя открывать в интернет (с его служебным токеном можно менять любые файлы),
+// поэтому фото товаров загружаются, удаляются и выдаются только через эти функции.
+// Правила те же, что в storage.rules: загружать — контент-менеджер и администратор, JPEG до 5 МБ
+const PHOTO_PATH = /^products\/[A-Za-z0-9_-]{1,100}\/[A-Za-z0-9_-]{1,100}\.jpg$/;
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const bucket = () => getStorage().bucket();
+
+function jpegFromBase64(value) {
+  const bytes = typeof value === 'string' ? Buffer.from(value, 'base64') : null;
+  const isJpeg = bytes && bytes.length > 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  if (!isJpeg || bytes.length > MAX_PHOTO_BYTES) {
+    throw new HttpsError('invalid-argument', 'Фото не прочитано: нужен JPEG не больше 5 МБ.');
+  }
+  return bytes;
+}
+
+export const uploadProductPhoto = onCall(
+  handle(async (request) => {
+    await requireRole(request, CATALOG_ROLES);
+    const { productId, main, thumb } = request.data ?? {};
+    if (typeof productId !== 'string' || !/^[A-Za-z0-9_-]{1,100}$/.test(productId)) {
+      throw new HttpsError('invalid-argument', 'Неверный код товара.');
+    }
+    // Имена с отметкой времени: новое фото получает новый адрес, и браузер не покажет из кэша старое
+    const stamp = Date.now();
+    const files = [
+      [`products/${productId}/main-${stamp}.jpg`, jpegFromBase64(main)],
+      [`products/${productId}/thumb-${stamp}.jpg`, jpegFromBase64(thumb)],
+    ];
+    await Promise.all(
+      files.map(([path, bytes]) =>
+        bucket().file(path).save(bytes, { contentType: 'image/jpeg', metadata: { cacheControl: 'public, max-age=86400' } })
+      )
+    );
+    return { images: [files[0][0]], thumbnail: files[1][0] };
+  })
+);
+
+export const deleteProductPhotos = onCall(
+  handle(async (request) => {
+    await requireRole(request, CATALOG_ROLES);
+    const paths = (Array.isArray(request.data?.paths) ? request.data.paths : []).filter((p) => PHOTO_PATH.test(p));
+    await Promise.all(paths.slice(0, 10).map((path) => bucket().file(path).delete({ ignoreNotFound: true })));
+    return { deleted: paths.length };
+  })
+);
+
+// Фото товара по пути из базы: GET …/photo?path=products/<id>/<файл>.jpg. Читать фото товаров может любой
+export const photo = onRequest(async (req, res) => {
+  const path = String(req.query.path ?? '');
+  if (req.method !== 'GET' || !PHOTO_PATH.test(path)) {
+    res.status(404).send('Not found');
+    return;
+  }
+  try {
+    const [bytes] = await bucket().file(path).download();
+    res.set('Content-Type', 'image/jpeg').set('Cache-Control', 'public, max-age=86400').send(bytes);
+  } catch (err) {
+    res.status(err.code === 404 ? 404 : 500).send(err.code === 404 ? 'Not found' : 'Error');
+  }
 });

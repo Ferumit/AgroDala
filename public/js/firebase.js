@@ -30,12 +30,16 @@ export const emulatorHost = isLoopback ? '127.0.0.1' : location.hostname;
 // Порты эмуляторов — как в firebase.json (совпадение проверяет tests/pages.test.js)
 export const PORTS = { firestore: 28573, auth: 28574, storage: 28575, functions: 28579 };
 
-// Настоящий проект Firebase подключается на этапе публикации (неделя 6 по ТЗ)
-const productionConfig = null;
-
-if (!isLocal && !productionConfig) {
-  throw new Error('Проект Firebase для публикации ещё не настроен');
-}
+// Настоящий проект Firebase (опубликованный сайт). Это не секрет: такие же настройки получает
+// браузер каждого посетителя. Доступ к данным ограничивают правила firestore.rules и storage.rules
+const productionConfig = {
+  apiKey: 'AIzaSyAWU4bI2R0SBDAqCTAnE2q6w5gwJ01YwRY',
+  authDomain: 'agrodala.firebaseapp.com',
+  projectId: 'agrodala',
+  storageBucket: 'agrodala.firebasestorage.app',
+  messagingSenderId: '984426393995',
+  appId: '1:984426393995:web:85489f6c25f22b4ad1bf8e',
+};
 
 export const app = initializeApp(
   isLocal
@@ -62,12 +66,25 @@ if (isLocal) {
   connectAuthEmulator(auth, `http://${emulatorHost}:${PORTS.auth}`, { disableWarnings: true });
 }
 
-// Адрес фотографии из Cloud Storage по её пути в базе (products/<id>/main.jpg).
-// Правила Storage разрешают всем читать фото товаров, поэтому адрес строится сразу,
-// без отдельного запроса getDownloadURL на каждую карточку
+// Cloud Functions и загруженные фото у опубликованного сайта. Тариф Blaze, на котором функции
+// и хранилище работают в облаке, у проекта не подключён, поэтому они запущены на ноутбуке
+// разработчика (npm run backend: эмуляторы функций и хранилища с настоящей базой) и открыты
+// в интернет через Cloudflare Tunnel — только адреса функций /agrodala/europe-central2/….
+// После подключения Blaze и публикации функций (npm run deploy) здесь нужно поставить null
+const LAPTOP_BACKEND = 'https://agrodala-api.artmori.art';
+export const REGION = 'europe-central2'; // как в functions/index.js
+export const backendFunctionsUrl = isLocal || !LAPTOP_BACKEND ? null : `${LAPTOP_BACKEND}/${app.options.projectId}/${REGION}`;
+
+// Адрес фотографии по её пути в базе.
+// img/products/… — фото из тестовых данных: опубликованы вместе с сайтом, работают без ноутбука.
+// products/<id>/… — фото, загруженные в админ-панели: лежат в Cloud Storage. Правила Storage
+// разрешают всем читать фото товаров, поэтому адрес строится сразу, без отдельного запроса
+// getDownloadURL на каждую карточку; на ноутбуке их отдаёт функция photo
 const storageHost = isLocal ? `http://${emulatorHost}:${PORTS.storage}` : 'https://firebasestorage.googleapis.com';
 
 export function photoUrl(path) {
+  if (path.startsWith('img/')) return `/${path}`;
+  if (backendFunctionsUrl) return `${backendFunctionsUrl}/photo?path=${encodeURIComponent(path)}`;
   const bucket = app.options.storageBucket;
   return `${storageHost}/v0/b/${bucket}/o/${encodeURIComponent(path)}?alt=media`;
 }

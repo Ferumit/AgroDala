@@ -22,9 +22,32 @@
   ],
   "hosting": {
     "public": "public",
+    "predeploy": [
+      "node scripts/copy-photos.js"
+    ],
     "ignore": [
       "firebase.json",
       "**/.*"
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(html|js|css)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(svg|png|jpg|webp|ico)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=86400"
+          }
+        ]
+      }
     ]
   },
   "emulators": {

@@ -13,12 +13,17 @@
     "predev": "node scripts/sync-shared.js",
     "dev": "firebase emulators:start",
     "dev:phone": "firebase emulators:start --config firebase.phone.json",
+    "prebackend": "node scripts/sync-shared.js",
+    "backend": "node scripts/backend.js",
     "seed": "node scripts/seed.js",
+    "seed:prod": "node scripts/seed.js --prod",
     "pretest": "node scripts/sync-shared.js",
     "test": "firebase emulators:exec --only auth,firestore,storage,functions \"vitest run\"",
     "test:ui": "firebase emulators:exec --only auth,firestore,storage,functions,hosting \"node scripts/seed.js && playwright test --project=phone --project=desktop\"",
     "test:browsers": "firebase emulators:exec --only auth,firestore,storage,functions,hosting \"node scripts/seed.js && playwright test --project=firefox --project=webkit\"",
-    "screenshots": "firebase emulators:exec --ui --only auth,firestore,storage,functions,hosting \"node scripts/seed.js && node scripts/screenshots.js\""
+    "screenshots": "firebase emulators:exec --ui --only auth,firestore,storage,functions,hosting \"node scripts/seed.js && node scripts/screenshots.js\"",
+    "deploy": "firebase deploy -P prod --only firestore,storage,functions,hosting",
+    "deploy:site": "firebase deploy -P prod --only hosting"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "6.0.0",

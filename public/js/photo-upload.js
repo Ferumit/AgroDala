@@ -2,7 +2,8 @@
 // Браузер сам уменьшает снимок: большое фото — до 960 пикселей по ширине, миниатюра для каталога —
 // 480×360 (как у тестовых данных). Так в хранилище не попадают снимки с телефона по 5–10 МБ,
 // а каталог грузит лёгкие миниатюры. Правила storage.rules пускают сюда только контент-менеджера
-// и администратора
+// и администратора. Когда функции работают на ноутбуке (firebase.js, backendFunctionsUrl), фото
+// передаются функции uploadProductPhoto: она проверяет роль и сама кладёт файлы в хранилище
 import {
   getStorage,
   connectStorageEmulator,
@@ -10,7 +11,7 @@ import {
   uploadBytes,
   deleteObject,
 } from 'https://www.gstatic.com/firebasejs/13.0.0/firebase-storage.js';
-import { app, emulatorHost, isLocal, PORTS } from './firebase.js';
+import { app, backendFunctionsUrl, emulatorHost, isLocal, PORTS } from './firebase.js';
 
 const storage = getStorage(app);
 if (isLocal) connectStorageEmulator(storage, emulatorHost, PORTS.storage);
@@ -35,7 +36,20 @@ async function resize(file, width, height, cover) {
 
 // Имена файлов с отметкой времени: новое фото получает новый адрес, и браузер
 // не покажет из кэша старое
+const toBase64 = (blob) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.slice(reader.result.indexOf(',') + 1));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+
 export async function uploadProductPhoto(productId, file) {
+  if (backendFunctionsUrl) {
+    const [big, small] = await Promise.all([resize(file, 960, 960, false), resize(file, 480, 360, true)]);
+    const { call } = await import('./functions.js');
+    return call('uploadProductPhoto', { productId, main: await toBase64(big), thumb: await toBase64(small) });
+  }
   const stamp = Date.now();
   const main = `products/${productId}/main-${stamp}.jpg`;
   const thumb = `products/${productId}/thumb-${stamp}.jpg`;
@@ -48,5 +62,11 @@ export async function uploadProductPhoto(productId, file) {
 // Старые файлы удаляются после того, как товар сохранён с новыми. Ошибка удаления не мешает работе:
 // останется лишний файл в хранилище
 export async function deletePhotos(paths) {
+  paths = paths.filter((path) => path?.startsWith('products/'));
+  if (backendFunctionsUrl) {
+    const { call } = await import('./functions.js');
+    if (paths.length) await call('deleteProductPhotos', { paths }).catch(() => {});
+    return;
+  }
   await Promise.all(paths.filter(Boolean).map((path) => deleteObject(ref(storage, path)).catch(() => {})));
 }

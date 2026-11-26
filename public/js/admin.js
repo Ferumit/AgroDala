@@ -4,6 +4,7 @@
 // Заказы и импорт идут через Cloud Functions (functions/index.js): там пересчитываются остатки,
 // ведётся история статусов и создаются учётные записи клиентов
 import {
+  backendFunctionsUrl,
   db,
   collection,
   deleteDoc,
@@ -243,6 +244,7 @@ productForm.addEventListener('submit', async (event) => {
       });
     }
     productDialog.close();
+    refreshCatalogMeta();
     showMessage(`Товар «${name}» сохранён.`);
     await loadCatalog();
   } catch (err) {
@@ -256,6 +258,15 @@ productForm.addEventListener('submit', async (event) => {
   }
 });
 
+// Список производителей для фильтра пересчитывает триггер syncCatalogMeta при изменении товара.
+// Функции на ноутбуке (firebase.js, backendFunctionsUrl) не получают событий облачной базы,
+// поэтому в этом режиме панель просит пересчитать список сама — в фоне, не задерживая сохранение
+async function refreshCatalogMeta() {
+  if (!backendFunctionsUrl) return;
+  const { call } = await import('./functions.js');
+  await call('refreshCatalogMeta').catch((err) => console.warn(err));
+}
+
 async function deleteProduct(id) {
   const p = products.find((x) => x.id === id);
   if (!confirm(`Удалить товар «${p.name}»? В уже оформленных заказах он останется.`)) return;
@@ -263,6 +274,7 @@ async function deleteProduct(id) {
     await deleteDoc(doc(db, 'products', id));
     const { deletePhotos } = await import('./photo-upload.js');
     await deletePhotos([...(p.images ?? []), p.thumbnail]);
+    refreshCatalogMeta();
     showMessage(`Товар «${p.name}» удалён.`);
     await loadCatalog();
   } catch (err) {
@@ -518,15 +530,19 @@ async function main() {
   }
   role = profile.role;
   const allowed = SECTIONS[role];
-  document.querySelectorAll('[data-editor-only]').forEach((el) => {
-    el.hidden = !isEditor();
-  });
   // Клиентов (персональные данные) импортирует только администратор
   $('[data-import-users]').hidden = role !== 'admin';
   showSection(allowed);
   addEventListener('hashchange', () => showSection(allowed));
   $('[data-admin]').hidden = false;
-  await Promise.all([loadCatalog(), allowed.includes('orders') ? loadOrders() : null]);
+  // Кнопки «Добавить товар» и «Добавить категорию» появляются после загрузки каталога: иначе форма
+  // товара, открытая раньше, получила бы пустой список категорий (в облаке загрузка заметно дольше)
+  const catalog = loadCatalog().then(() => {
+    document.querySelectorAll('[data-editor-only]').forEach((el) => {
+      el.hidden = !isEditor();
+    });
+  });
+  await Promise.all([catalog, allowed.includes('orders') ? loadOrders() : null]);
 }
 
 main().catch((err) => {
