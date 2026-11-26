@@ -15,7 +15,7 @@ const dir = (d) => (d === 'desc' ? 'DESCENDING' : 'ASCENDING');
 
 // Какие индексы нужны запросу: на каждое поле с равенством (in, array-contains) — индекс
 // «поле + сортировка» (несколько таких Firestore объединяет); при своём диапазоне цены
-// и сортировке не по цене — ещё и цена после поля сортировки
+// и сортировке не по цене — ещё и цена после поля сортировки, в том же направлении
 function required(spec) {
   const [sortField, sortDir] = spec.orderBy;
   const range = spec.where.some(([field, op]) => field === 'price' && (op === '>=' || op === '<='));
@@ -24,7 +24,8 @@ function required(spec) {
     ...(op === 'array-contains' ? { arrayConfig: 'CONTAINS' } : { order: 'ASCENDING' }),
   }));
   const tail = [{ fieldPath: sortField, order: dir(sortDir) }];
-  if (range && sortField !== 'price') tail.push({ fieldPath: 'price', order: 'ASCENDING' });
+  // Firestore неявно сортирует по полю диапазона в направлении последней сортировки
+  if (range && sortField !== 'price') tail.push({ fieldPath: 'price', order: dir(sortDir) });
   if (filtersOn.length === 0) return tail.length > 1 ? [tail] : [];
   return filtersOn.map((f) => [f, ...tail]);
 }

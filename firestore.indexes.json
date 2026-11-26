@@ -472,7 +472,7 @@
         },
         {
           "fieldPath": "price",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         }
       ]
     },
@@ -490,7 +490,7 @@
         },
         {
           "fieldPath": "price",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         }
       ]
     },
@@ -508,7 +508,7 @@
         },
         {
           "fieldPath": "price",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         }
       ]
     },
@@ -526,7 +526,7 @@
         },
         {
           "fieldPath": "price",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         }
       ]
     },
@@ -544,7 +544,7 @@
         },
         {
           "fieldPath": "price",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         }
       ]
     },
@@ -562,7 +562,7 @@
         },
         {
           "fieldPath": "price",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         }
       ]
     },
@@ -580,7 +580,7 @@
         },
         {
           "fieldPath": "price",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         }
       ]
     },
@@ -598,7 +598,7 @@
         },
         {
           "fieldPath": "price",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         }
       ]
     },
@@ -616,7 +616,7 @@
         },
         {
           "fieldPath": "price",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         }
       ]
     },

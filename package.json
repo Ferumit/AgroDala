@@ -17,6 +17,7 @@
     "backend": "node scripts/backend.js",
     "seed": "node scripts/seed.js",
     "seed:prod": "node scripts/seed.js --prod",
+    "check:indexes": "node scripts/check-indexes.js",
     "pretest": "node scripts/sync-shared.js",
     "test": "firebase emulators:exec --only auth,firestore,storage,functions \"vitest run\"",
     "test:ui": "firebase emulators:exec --only auth,firestore,storage,functions,hosting \"node scripts/seed.js && playwright test --project=phone --project=desktop\"",

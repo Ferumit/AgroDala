@@ -7,7 +7,10 @@
 // заводятся индексы «одно поле фильтра + поле сортировки»: запрос с несколькими равенствами
 // Firestore выполняет, объединяя такие индексы (index merging, алгоритм zig-zag merge join).
 // Свой диапазон цены (price >= / <=) при сортировке не по цене требует, чтобы цена шла
-// в индексе после поля сортировки
+// в индексе после поля сортировки — в том же направлении: Firestore неявно дописывает к запросу
+// orderBy('price') с направлением последней сортировки. Для «Сначала новые» (createdAt по убыванию)
+// это price по убыванию; индекс с price по возрастанию настоящая база не принимала (найдено
+// проверкой на облачной базе, 6-я неделя)
 import { readFile, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { EQUALITY_FIELDS, SEARCH_FIELD, SORTS } from '../public/js/catalog.js';
@@ -27,8 +30,8 @@ export function catalogIndexes() {
   const add = (fields) => unique.set(JSON.stringify(fields), index(...fields));
   for (const f of filters) for (const s of sorts) add([filterField(f), order(s.field, s.dir)]);
   for (const s of byOther) {
-    add([order(s.field, s.dir), order('price', 'asc')]);
-    for (const f of filters) add([filterField(f), order(s.field, s.dir), order('price', 'asc')]);
+    add([order(s.field, s.dir), order('price', s.dir)]);
+    for (const f of filters) add([filterField(f), order(s.field, s.dir), order('price', s.dir)]);
   }
   return [...unique.values()];
 }
