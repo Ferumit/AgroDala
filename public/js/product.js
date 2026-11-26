@@ -101,6 +101,11 @@ function render(p, category) {
   const specs = Object.entries(p.specs ?? {})
     .map(([name, value]) => `<tr><th scope="row">${escapeHtml(name)}</th><td>${escapeHtml(value)}</td></tr>`)
     .join('');
+  // Описание и характеристики необязательны (товар из админ-панели или импорта): пустые разделы не показываем
+  const details = [
+    p.description ? `<h2>Описание</h2><p>${escapeHtml(p.description)}</p>` : '',
+    specs ? `<h2>Характеристики</h2><table class="specs"><tbody>${specs}</tbody></table>` : '',
+  ].join('');
 
   root.innerHTML = `
     ${backLink()}
@@ -126,12 +131,7 @@ function render(p, category) {
         </dl>
       </div>
     </div>
-    <section class="panel" style="margin-top: 20px">
-      <h2>Описание</h2>
-      <p>${escapeHtml(p.description)}</p>
-      <h2>Характеристики</h2>
-      <table class="specs"><tbody>${specs}</tbody></table>
-    </section>`;
+    ${details ? `<section class="panel" style="margin-top: 20px">${details}</section>` : ''}`;
 }
 
 // Корзина хранится в базе у вошедшего покупателя (carts/{uid}), поэтому сначала — вход.
