@@ -188,7 +188,8 @@ public/                 сайт: всё, что загружается в бр�
   img/icons/            иконки Lucide (лицензия ISC)
   import/               примеры файлов CSV для импорта товаров и клиентов
 functions/              Cloud Functions (Node.js 22)
-  index.js              placeOrder, setOrderStatus, importCsv, syncCatalogMeta
+  index.js              placeOrder, setOrderStatus, importCsv, syncCatalogMeta, refreshCatalogMeta,
+                        uploadProductPhoto, deleteProductPhotos, photo
   lib/orders.js         проверка формы, расчёт суммы и резерва, права на смену статуса
   lib/csv.js            разбор CSV из Excel и проверка строк
   shared/               копии public/js/{dictionaries,search,catalog}.js (scripts/sync-shared.js)
